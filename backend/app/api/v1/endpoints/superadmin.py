@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.database.session import get_db
 from app.models.tenant import Tenant
 from app.models.user import User

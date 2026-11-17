@@ -1,8 +1,8 @@
 from datetime import date, timedelta
 from typing import List, Dict, Any
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from app.database.session import Session
+from app.database.mongo_odm import func
 from app.database.session import get_db
 from app.models.attendance import Attendance
 from app.models.employee import Employee

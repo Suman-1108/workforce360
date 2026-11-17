@@ -1,5 +1,3 @@
-from typing import Generator
-from sqlalchemy.orm import Session
-from app.database.session import get_db
+from app.database.session import get_db, Session
 
-__all__ = ["get_db"]
+__all__ = ["get_db", "Session"]

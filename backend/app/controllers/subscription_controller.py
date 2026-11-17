@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.services.subscription_service import (
     subscription_service,
     SubscriptionService,

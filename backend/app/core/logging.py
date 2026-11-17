@@ -18,7 +18,7 @@ def setup_logging():
 
     # Silence overly verbose external loggers
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
-    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING if not settings.DEBUG else logging.INFO)
+    logging.getLogger("pymongo").setLevel(logging.WARNING)
 
     logger = logging.getLogger("workforce360")
     logger.info(f"Initialized structured logging for {settings.APP_NAME} ({settings.APP_ENV})")

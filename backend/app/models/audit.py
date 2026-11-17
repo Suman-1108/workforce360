@@ -1,17 +1,16 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Text, JSON, DateTime, ForeignKey
-from app.database.session import Base
+from app.database.mongo_odm import MongoDocument, Field
 
 
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
+class AuditLog(MongoDocument):
+    __collection__ = "audit_logs"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    action = Column(String(50), nullable=False)
-    resource = Column(String(50), nullable=False)
-    resource_id = Column(String(50), nullable=True)
-    ip_address = Column(String(50), nullable=True)
-    details = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+    id = Field(int, primary_key=True)
+    tenant_id = Field(int, fk_target="Tenant")
+    user_id = Field(int, fk_target="User")
+    action = Field(str)
+    resource = Field(str)
+    resource_id = Field(str)
+    ip_address = Field(str)
+    details = Field(dict)
+    created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))

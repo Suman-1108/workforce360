@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 import secrets
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.database.session import get_db
 from app.core.config import settings
 from app.core.security import verify_password, get_password_hash, create_access_token

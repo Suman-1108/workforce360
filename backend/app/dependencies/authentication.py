@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import Depends, Header
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.core.config import settings
 from app.core.security import decode_access_token
 from app.core.exceptions import UnauthorizedException, ForbiddenException

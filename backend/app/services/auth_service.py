@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.user import User
 from app.models.tenant import Tenant
 from app.repositories.user_repository import user_repository, UserRepository

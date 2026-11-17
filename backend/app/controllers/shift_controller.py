@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.services.shift_service import shift_service, ShiftService
 from app.schemas.shift_schema import (
     ShiftCreate,

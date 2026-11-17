@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from app.database.session import Session
+from app.database.mongo_odm import or_
 from app.models.uniform import UniformItem, UniformDistribution
 from app.models.employee import Employee
 from app.models.user import User

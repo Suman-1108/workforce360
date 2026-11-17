@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from app.database.session import Session
+from app.database.mongo_odm import func
 from app.models.tenant import Tenant
 from app.models.employee import Employee
 from app.models.subscription import Subscription

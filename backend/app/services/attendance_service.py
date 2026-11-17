@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone, timedelta, time
 from typing import Optional, List, Tuple
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.attendance import Attendance
 from app.models.employee import Employee
 from app.models.branch import Branch

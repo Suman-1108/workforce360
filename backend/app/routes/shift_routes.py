@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.dependencies import get_db, get_current_user, require_roles, get_tenant_id
 from app.controllers.shift_controller import shift_controller
 from app.schemas.shift_schema import (

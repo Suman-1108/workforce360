@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import Session
-from sqlalchemy import or_, func
+from app.database.session import Session
+from app.database.mongo_odm import or_, func
 from app.models.tenant import Tenant
 from app.models.tenant_setting import TenantSetting
 from app.models.department import Department

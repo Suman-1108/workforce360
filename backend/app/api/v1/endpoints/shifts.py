@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.database.session import get_db
 from app.models.shift import Shift, EmployeeShift
 from app.models.user import User

@@ -1,34 +1,36 @@
 from datetime import datetime, timezone
 import uuid
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Enum
-from sqlalchemy.orm import relationship
-from app.database.session import Base
+from app.database.mongo_odm import MongoDocument, Field, Relation
 
 
-class Tenant(Base):
-    __tablename__ = "tenants"
+class Tenant(MongoDocument):
+    __collection__ = "tenants"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String(100), nullable=False)
-    subdomain = Column(String(50), unique=True, index=True, nullable=True)
-    contact_email = Column(String(100), nullable=False)
-    contact_phone = Column(String(30), nullable=True)
-    address = Column(Text, nullable=True)
-    logo_url = Column(String(255), nullable=True)
-    status = Column(Enum("active", "suspended", "pending_verification", name="tenant_status_enum"), default="active", nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    id = Field(int, primary_key=True)
+    uuid = Field(str, default=lambda: str(uuid.uuid4()))
+    name = Field(str)
+    subdomain = Field(str)
+    contact_email = Field(str)
+    contact_phone = Field(str)
+    address = Field(str)
+    logo_url = Field(str)
+    status = Field(str, default="active")
+    created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Field(
+        datetime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
-    # Relationships
-    users = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
-    subscription = relationship("Subscription", back_populates="tenant", uselist=False, cascade="all, delete-orphan")
-    departments = relationship("Department", back_populates="tenant", cascade="all, delete-orphan")
-    branches = relationship("Branch", back_populates="tenant", cascade="all, delete-orphan")
-    employees = relationship("Employee", back_populates="tenant", cascade="all, delete-orphan")
-    shifts = relationship("Shift", back_populates="tenant", cascade="all, delete-orphan")
-    attendances = relationship("Attendance", back_populates="tenant", cascade="all, delete-orphan")
-    leave_requests = relationship("LeaveRequest", back_populates="tenant", cascade="all, delete-orphan")
-    uniform_items = relationship("UniformItem", back_populates="tenant", cascade="all, delete-orphan")
-    uniform_distributions = relationship("UniformDistribution", back_populates="tenant", cascade="all, delete-orphan")
-    settings = relationship("TenantSetting", back_populates="tenant", uselist=False, cascade="all, delete-orphan")
+    # Collection Relationships
+    users = Relation("User", fk_field="id", remote_field="tenant_id", uselist=True)
+    subscription = Relation("Subscription", fk_field="id", remote_field="tenant_id", uselist=False)
+    departments = Relation("Department", fk_field="id", remote_field="tenant_id", uselist=True)
+    branches = Relation("Branch", fk_field="id", remote_field="tenant_id", uselist=True)
+    employees = Relation("Employee", fk_field="id", remote_field="tenant_id", uselist=True)
+    shifts = Relation("Shift", fk_field="id", remote_field="tenant_id", uselist=True)
+    attendances = Relation("Attendance", fk_field="id", remote_field="tenant_id", uselist=True)
+    leave_requests = Relation("LeaveRequest", fk_field="id", remote_field="tenant_id", uselist=True)
+    uniform_items = Relation("UniformItem", fk_field="id", remote_field="tenant_id", uselist=True)
+    uniform_distributions = Relation("UniformDistribution", fk_field="id", remote_field="tenant_id", uselist=True)
+    settings = Relation("TenantSetting", fk_field="id", remote_field="tenant_id", uselist=False)

@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 from typing import Optional, List
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.uniform import UniformItem, UniformDistribution
 from app.models.employee import Employee
 from app.models.user import User

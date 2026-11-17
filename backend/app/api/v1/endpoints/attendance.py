@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, date, timedelta
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.database.session import get_db
 from app.models.attendance import Attendance
 from app.models.employee import Employee

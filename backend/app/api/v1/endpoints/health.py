@@ -1,25 +1,16 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from app.database.session import get_db
-from app.core.config import settings
+from app.database.session import get_db, Session
+from app.database.connection import check_db_connection
 
 router = APIRouter()
 
 
-@router.get("/health", summary="System Health Check")
+@router.get("", summary="System & MongoDB Health Check")
 def health_check(db: Session = Depends(get_db)):
-    """Health check endpoint that verifies database connectivity."""
-    db_status = "connected"
-    try:
-        db.execute(text("SELECT 1"))
-    except Exception as e:
-        db_status = f"unhealthy: {str(e)}"
-
+    """Verify API operational state and MongoDB connectivity."""
+    db_info = check_db_connection()
     return {
-        "status": "healthy" if db_status == "connected" else "degraded",
-        "app_name": settings.APP_NAME,
-        "environment": settings.APP_ENV,
-        "database": db_status,
-        "version": "1.0.0"
+        "status": "healthy" if db_info.get("connected") else "degraded",
+        "service": "WorkForce 360 API",
+        "database": db_info,
     }

@@ -1,21 +1,22 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from app.database.session import Base
+from app.database.mongo_odm import MongoDocument, Field, Relation
 
 
-class Department(Base):
-    __tablename__ = "departments"
+class Department(MongoDocument):
+    __collection__ = "departments"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    name = Column(String(100), nullable=False)
-    code = Column(String(20), nullable=True)
-    description = Column(Text, nullable=True)
-    manager_name = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    id = Field(int, primary_key=True)
+    tenant_id = Field(int, fk_target="Tenant")
+    name = Field(str)
+    code = Field(str)
+    description = Field(str)
+    manager_name = Field(str)
+    created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Field(
+        datetime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
-    # Relationships
-    tenant = relationship("Tenant", back_populates="departments")
-    employees = relationship("Employee", back_populates="department")
+    tenant = Relation("Tenant", fk_field="tenant_id", remote_field="id", uselist=False)
+    employees = Relation("Employee", fk_field="id", remote_field="department_id", uselist=True)

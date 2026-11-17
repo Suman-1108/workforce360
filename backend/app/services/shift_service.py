@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from typing import Optional, List
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.shift import Shift, EmployeeShift
 from app.models.employee import Employee
 from app.repositories.shift_repository import shift_repository, ShiftRepository

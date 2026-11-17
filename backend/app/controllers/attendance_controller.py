@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.user import User
 from app.services.attendance_service import (
     attendance_service,

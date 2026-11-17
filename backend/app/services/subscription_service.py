@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.subscription import SubscriptionPlan, Subscription
 from app.repositories.subscription_repository import (
     subscription_repository,

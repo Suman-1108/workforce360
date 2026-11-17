@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.database.session import get_db
 from app.core.config import settings
 from app.models.subscription import SubscriptionPlan, Subscription

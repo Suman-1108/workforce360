@@ -1,43 +1,35 @@
 from datetime import datetime, timezone, time, date
-from sqlalchemy import Column, Integer, String, Time, Date, Boolean, DateTime, ForeignKey, Enum
-from sqlalchemy.orm import relationship
-from app.database.session import Base
+from app.database.mongo_odm import MongoDocument, Field, Relation
 
 
-class Shift(Base):
-    __tablename__ = "shifts"
+class Shift(MongoDocument):
+    __collection__ = "shifts"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    name = Column(String(50), nullable=False)  # Morning Shift, Night Shift
-    code = Column(String(20), nullable=True)
-    type = Column(
-        Enum("Morning", "Day", "Evening", "Night", "Rotational", name="shift_type_enum"),
-        default="Day",
-        nullable=False
-    )
-    start_time = Column(Time, nullable=False, default=time(9, 0))
-    end_time = Column(Time, nullable=False, default=time(18, 0))
-    grace_period_mins = Column(Integer, default=15, nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    id = Field(int, primary_key=True)
+    tenant_id = Field(int, fk_target="Tenant")
+    name = Field(str)
+    code = Field(str)
+    type = Field(str, default="Day")
+    start_time = Field(time, default=lambda: time(9, 0))
+    end_time = Field(time, default=lambda: time(18, 0))
+    grace_period_mins = Field(int, default=15)
+    is_active = Field(bool, default=True)
+    created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))
 
-    # Relationships
-    tenant = relationship("Tenant", back_populates="shifts")
-    employee_shifts = relationship("EmployeeShift", back_populates="shift", cascade="all, delete-orphan")
+    tenant = Relation("Tenant", fk_field="tenant_id", remote_field="id", uselist=False)
+    employee_shifts = Relation("EmployeeShift", fk_field="id", remote_field="shift_id", uselist=True)
 
 
-class EmployeeShift(Base):
-    __tablename__ = "employee_shifts"
+class EmployeeShift(MongoDocument):
+    __collection__ = "employee_shifts"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False)
-    shift_id = Column(Integer, ForeignKey("shifts.id", ondelete="CASCADE"), nullable=False)
-    effective_date = Column(Date, default=date.today, nullable=False)
-    end_date = Column(Date, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    id = Field(int, primary_key=True)
+    tenant_id = Field(int, fk_target="Tenant")
+    employee_id = Field(int, fk_target="Employee")
+    shift_id = Field(int, fk_target="Shift")
+    effective_date = Field(date, default=date.today)
+    end_date = Field(date)
+    created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))
 
-    # Relationships
-    employee = relationship("Employee", back_populates="shifts")
-    shift = relationship("Shift", back_populates="employee_shifts")
+    employee = Relation("Employee", fk_field="employee_id", remote_field="id", uselist=False)
+    shift = Relation("Shift", fk_field="shift_id", remote_field="id", uselist=False)

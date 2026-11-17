@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional, Tuple
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from app.database.session import Session
+from app.database.mongo_odm import and_, or_
 from app.models.attendance import Attendance
 from app.models.employee import Employee
 from app.models.user import User

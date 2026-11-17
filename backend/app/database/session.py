@@ -1,23 +1,26 @@
 import threading
 from typing import Generator
 from contextlib import contextmanager
-from sqlalchemy.orm import sessionmaker, Session
-from app.database.connection import engine
+from app.database.connection import get_mongo_db, ensure_mongo_indexes
 from app.database.base import Base
+from app.database.mongo_odm import MongoSession
 from app.core.logging import logger
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-)
+# Public Session alias for type annotations across repositories, services, controllers, and routes
+Session = MongoSession
+
+
+def SessionLocal() -> MongoSession:
+    """Create a new MongoDB unit-of-work session."""
+    return MongoSession(get_mongo_db())
+
 
 _init_lock = threading.Lock()
 _db_initialized = False
 
 
 def ensure_database_initialized() -> None:
-    """Ensure tables exist and seed demo accounts if the database is empty (runs once per process)."""
+    """Ensure MongoDB indexes exist and seed demo collections if empty (runs once per process)."""
     global _db_initialized
     if _db_initialized:
         return
@@ -26,33 +29,28 @@ def ensure_database_initialized() -> None:
         if _db_initialized:
             return
         try:
-            # Import all models so Base.metadata registers every table
+            # Register all MongoDocument models
             import app.models  # noqa: F401
-            from app.models.user import User
 
-            Base.metadata.create_all(bind=engine)
+            db = get_mongo_db()
+            ensure_mongo_indexes(db)
 
-            db = SessionLocal()
-            try:
-                has_users = db.query(User.id).first() is not None
-            finally:
-                db.close()
-
+            has_users = db["users"].find_one({}, {"id": 1}) is not None
             if not has_users:
-                logger.info("Empty database detected — running initial seed_database()...")
+                logger.info("Empty MongoDB database detected — running initial seed_database()...")
                 from app.database.seed import seed_database
                 seed_database()
 
             _db_initialized = True
         except Exception as exc:
-            logger.error(f"Database auto-initialization error: {exc}", exc_info=True)
+            logger.error(f"MongoDB auto-initialization error: {exc}", exc_info=True)
             raise
 
 
-def get_db() -> Generator[Session, None, None]:
-    """FastAPI transactional dependency providing a database session per request."""
+def get_db() -> Generator[MongoSession, None, None]:
+    """FastAPI dependency providing a MongoDB session per request."""
     ensure_database_initialized()
-    db: Session = SessionLocal()
+    db: MongoSession = SessionLocal()
     try:
         yield db
     finally:
@@ -60,10 +58,10 @@ def get_db() -> Generator[Session, None, None]:
 
 
 @contextmanager
-def get_db_session() -> Generator[Session, None, None]:
-    """Context manager for database sessions outside FastAPI request lifecycle."""
+def get_db_session() -> Generator[MongoSession, None, None]:
+    """Context manager for MongoDB sessions outside FastAPI request lifecycle."""
     ensure_database_initialized()
-    session: Session = SessionLocal()
+    session: MongoSession = SessionLocal()
     try:
         yield session
         session.commit()

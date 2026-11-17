@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.services.uniform_service import uniform_service, UniformService
 from app.schemas.uniform_schema import (
     UniformItemCreate,

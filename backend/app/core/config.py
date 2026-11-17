@@ -1,10 +1,10 @@
-import os
-import tempfile
 from pathlib import Path
 from typing import List, Union
 import json
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_BACKEND_ENV_FILE = Path(__file__).resolve().parent.parent.parent / ".env"
 
 
 class Settings(BaseSettings):
@@ -19,39 +19,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Database Configuration (MySQL 8.0.46 locally, cloud DB or /tmp SQLite fallback on Vercel)
-    DB_HOST: str = "127.0.0.1"
-    DB_PORT: int = 3306
-    DB_USER: str = "workforce_app"
-    DB_PASSWORD: str = "Root123"
-    DB_NAME: str = "workforce360"
-    DATABASE_URL: str = ""
-
-    @field_validator("DATABASE_URL", mode="before")
-    @classmethod
-    def assemble_db_connection(cls, v: Union[str, None], info) -> str:
-        if isinstance(v, str) and v.strip():
-            url = v.strip()
-            if url.startswith("mysql://"):
-                url = "mysql+pymysql://" + url[len("mysql://"):]
-            elif url.startswith("postgres://"):
-                url = "postgresql://" + url[len("postgres://"):]
-            return url
-
-        data = info.data
-        host = data.get("DB_HOST", "127.0.0.1")
-
-        # On Vercel serverless, 127.0.0.1 MySQL is unreachable — fall back to writable /tmp SQLite
-        # so the app works immediately out of the box until an external DATABASE_URL is configured.
-        if os.environ.get("VERCEL") and host in ("127.0.0.1", "localhost", ""):
-            db_path = (Path(tempfile.gettempdir()) / "workforce360.db").as_posix()
-            return f"sqlite:///{db_path}"
-
-        user = data.get("DB_USER", "workforce_app")
-        password = data.get("DB_PASSWORD", "Root123")
-        port = data.get("DB_PORT", 3306)
-        db = data.get("DB_NAME", "workforce360")
-        return f"mysql+pymysql://{user}:{password}@{host}:{port}/{db}?charset=utf8mb4"
+    # Database Configuration (MongoDB — loaded strictly from .env / environment variables)
+    MONGODB_URI: str = ""
+    MONGODB_DB_NAME: str = "workforce360"
 
     # CORS Configuration
     CORS_ORIGINS: List[str] = [
@@ -100,7 +70,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = 120
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(_BACKEND_ENV_FILE),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",

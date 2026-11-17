@@ -1,5 +1,5 @@
 from typing import Optional, List, Tuple
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.employee import Employee
 from app.models.user import User
 from app.repositories.employee_repository import employee_repository, EmployeeRepository
@@ -35,7 +35,7 @@ class EmployeeService:
         self.entitlements = entitlements
 
     def _to_response(self, emp: Employee) -> EmployeeResponse:
-        """Map SQLAlchemy Employee entity into clean Pydantic response."""
+        """Map MongoDB Employee document into clean Pydantic response."""
         u = emp.user
         dept = emp.department
         br = emp.branch

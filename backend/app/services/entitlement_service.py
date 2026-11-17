@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.subscription import Subscription
 from app.models.employee import Employee
 from app.core.exceptions import (

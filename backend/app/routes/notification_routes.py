@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Query, Path
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.dependencies import get_db, get_current_user
 from app.models.user import User
 from app.controllers.notification_controller import notification_controller

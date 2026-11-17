@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import status
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.services.employee_service import employee_service, EmployeeService
 from app.schemas.employee_schema import EmployeeCreate, EmployeeUpdate
 from app.utils.response import success_response

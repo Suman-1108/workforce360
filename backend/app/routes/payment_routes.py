@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.dependencies import get_db, get_current_user, require_roles, get_tenant_id
 from app.controllers.subscription_controller import subscription_controller
 from app.schemas.subscription_schema import (

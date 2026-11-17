@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.services.organization_service import (
     organization_service,
     OrganizationService,

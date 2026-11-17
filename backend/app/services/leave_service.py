@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 from typing import Optional, List
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.leave import LeaveType, LeaveRequest
 from app.models.employee import Employee
 from app.models.user import User

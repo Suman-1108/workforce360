@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import datetime, timezone, date
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.database.session import get_db
 from app.core.security import get_password_hash
 from app.models.employee import Employee

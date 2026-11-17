@@ -1,6 +1,6 @@
 """
 WorkForce 360 - Repositories Layer
 Architectural Responsibility:
-Handles data persistence, SQLAlchemy query abstractions, transactions,
+Handles data persistence, MongoDB collection query abstractions, transactions,
 and enforces multi-tenant row-level boundary filters on all queries.
 """

@@ -1,49 +1,45 @@
 from datetime import datetime, timezone, date
-from sqlalchemy import Column, Integer, String, Text, Date, Boolean, DateTime, ForeignKey, Enum
-from sqlalchemy.orm import relationship
-from app.database.session import Base
+from app.database.mongo_odm import MongoDocument, Field, Relation
 
 
-class LeaveType(Base):
-    __tablename__ = "leave_types"
+class LeaveType(MongoDocument):
+    __collection__ = "leave_types"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    name = Column(String(50), nullable=False)  # Casual Leave, Sick Leave, Paid Leave
-    code = Column(String(20), nullable=True)
-    days_allowed_per_year = Column(Integer, default=12, nullable=False)
-    is_carry_forward = Column(Boolean, default=False, nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    id = Field(int, primary_key=True)
+    tenant_id = Field(int, fk_target="Tenant")
+    name = Field(str)
+    code = Field(str)
+    days_allowed_per_year = Field(int, default=12)
+    is_carry_forward = Field(bool, default=False)
+    is_active = Field(bool, default=True)
+    created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))
 
-    # Relationships
-    leave_requests = relationship("LeaveRequest", back_populates="leave_type")
+    leave_requests = Relation("LeaveRequest", fk_field="id", remote_field="leave_type_id", uselist=True)
 
 
-class LeaveRequest(Base):
-    __tablename__ = "leave_requests"
+class LeaveRequest(MongoDocument):
+    __collection__ = "leave_requests"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
-    leave_type_id = Column(Integer, ForeignKey("leave_types.id"), nullable=False)
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    total_days = Column(Integer, default=1, nullable=False)
-    reason = Column(Text, nullable=False)
-    status = Column(
-        Enum("Pending", "Approved", "Rejected", "Cancelled", name="leave_status_enum"),
-        default="Pending",
-        nullable=False
+    id = Field(int, primary_key=True)
+    tenant_id = Field(int, fk_target="Tenant")
+    employee_id = Field(int, fk_target="Employee")
+    leave_type_id = Field(int, fk_target="LeaveType")
+    start_date = Field(date)
+    end_date = Field(date)
+    total_days = Field(int, default=1)
+    reason = Field(str)
+    status = Field(str, default="Pending")
+    approved_by = Field(int, fk_target="User")
+    actioned_at = Field(datetime)
+    rejection_reason = Field(str)
+    created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Field(
+        datetime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
-    approved_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    actioned_at = Column(DateTime, nullable=True)
-    rejection_reason = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 
-    # Relationships
-    tenant = relationship("Tenant", back_populates="leave_requests")
-    employee = relationship("Employee", back_populates="leave_requests")
-    leave_type = relationship("LeaveType", back_populates="leave_requests")
-    approver = relationship("User", foreign_keys=[approved_by])
+    tenant = Relation("Tenant", fk_field="tenant_id", remote_field="id", uselist=False)
+    employee = Relation("Employee", fk_field="employee_id", remote_field="id", uselist=False)
+    leave_type = Relation("LeaveType", fk_field="leave_type_id", remote_field="id", uselist=False)
+    approver = Relation("User", fk_field="approved_by", remote_field="id", uselist=False)

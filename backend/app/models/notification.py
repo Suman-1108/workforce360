@@ -1,24 +1,23 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON
-from sqlalchemy.orm import relationship
-from app.database.session import Base
+from app.database.mongo_odm import MongoDocument, Field, Relation
 
 
-class Notification(Base):
-    """Notification model for tenant and user alerts."""
-    __tablename__ = "notifications"
+class Notification(MongoDocument):
+    """Notification document for tenant and user alerts."""
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
-    title = Column(String(255), nullable=False)
-    message = Column(Text, nullable=False)
-    category = Column(String(50), nullable=False, index=True)  # Employee, Attendance, Leave, Shift, Subscription, Payment, System
-    severity = Column(String(20), default="info", nullable=False)  # info, warning, success, error
-    is_read = Column(Boolean, default=False, nullable=False, index=True)
-    data = Column(JSON, nullable=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    read_at = Column(DateTime(timezone=True), nullable=True)
+    __collection__ = "notifications"
 
-    tenant = relationship("Tenant", backref="notifications")
-    user = relationship("User", backref="notifications")
+    id = Field(int, primary_key=True)
+    tenant_id = Field(int, fk_target="Tenant")
+    user_id = Field(int, fk_target="User")
+    title = Field(str)
+    message = Field(str)
+    category = Field(str)
+    severity = Field(str, default="info")
+    is_read = Field(bool, default=False)
+    data = Field(dict)
+    created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))
+    read_at = Field(datetime)
+
+    tenant = Relation("Tenant", fk_field="tenant_id", remote_field="id", uselist=False)
+    user = Relation("User", fk_field="user_id", remote_field="id", uselist=False)

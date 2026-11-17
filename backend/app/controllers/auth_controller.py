@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.services.auth_service import auth_service, AuthService
 from app.schemas.auth_schema import LoginRequest, ProfileUpdateRequest, ChangePasswordRequest
 from app.models.user import User

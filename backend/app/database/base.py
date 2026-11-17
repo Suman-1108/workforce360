@@ -1,21 +1,15 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, DateTime
-from sqlalchemy.orm import declarative_base
+from app.database.mongo_odm import MongoDocument, Field
 
-Base = declarative_base()
+Base = MongoDocument
 
 
 class TimestampMixin:
     """Reusable audit mixin providing automatic UTC timestamps."""
 
-    created_at = Column(
-        DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        nullable=False,
-    )
-    updated_at = Column(
-        DateTime,
+    created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Field(
+        datetime,
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
-        nullable=False,
     )

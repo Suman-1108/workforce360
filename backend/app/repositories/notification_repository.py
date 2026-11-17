@@ -1,6 +1,6 @@
 from typing import List, Optional
 from datetime import datetime, timezone
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.models.notification import Notification
 
 

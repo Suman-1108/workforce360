@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError
+from pymongo.errors import PyMongoError
 
 from app.api.v1.api import api_router
 from app.core.config import settings
@@ -115,14 +115,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-@app.exception_handler(SQLAlchemyError)
-async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
-    """Handle database errors securely without exposing schema details."""
-    logger.error(f"Database operation failed: {exc}", exc_info=settings.DEBUG)
+@app.exception_handler(PyMongoError)
+async def mongodb_exception_handler(request: Request, exc: PyMongoError):
+    """Handle MongoDB persistence errors securely without exposing connection details."""
+    logger.error(f"MongoDB operation failed: {exc}", exc_info=settings.DEBUG)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=error_response(
-            message="A database persistence error occurred. Please contact support.",
+            message="A database persistence error occurred. Please check MongoDB connectivity.",
             error_code="DATABASE_ERROR",
         ),
     )

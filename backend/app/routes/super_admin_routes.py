@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.orm import Session
+from app.database.session import Session
 from app.dependencies import get_db, require_roles
 from app.controllers.super_admin_controller import super_admin_controller
 from app.schemas.super_admin_schema import TenantStatusUpdateRequest
