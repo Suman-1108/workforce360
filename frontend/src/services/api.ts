@@ -332,6 +332,18 @@ export const superAdminApi = {
     const res = await api.post(`/superadmin/tenants/${tenantId}/status`, { status });
     return res.data?.data || res.data;
   },
+  listPlans: async () => {
+    const res = await api.get('/superadmin/plans');
+    return res.data?.data || res.data;
+  },
+  updatePlan: async (planId: number, data: Record<string, any>) => {
+    const res = await api.put(`/superadmin/plans/${planId}`, data);
+    return res.data?.data || res.data;
+  },
+  getTelemetry: async () => {
+    const res = await api.get('/superadmin/telemetry');
+    return res.data?.data || res.data;
+  },
 };
 
 export const organizationApi = {

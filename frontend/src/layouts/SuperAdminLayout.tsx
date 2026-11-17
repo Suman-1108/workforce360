@@ -112,6 +112,30 @@ export const SuperAdminLayout: React.FC<SuperAdminLayoutProps> = ({
         </div>
       </header>
 
+      {/* Mobile Navigation Tabs */}
+      <div className="md:hidden bg-[#183B36] border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+        {navItems.map((item) => {
+          const isActive = currentRoute === item.id
+          return (
+            <button
+              key={item.id}
+              onClick={() => onRouteChange?.(item.id)}
+              className={`
+                flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer
+                ${
+                  isActive
+                    ? 'bg-purple-600 text-white'
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                }
+              `}
+            >
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          )
+        })}
+      </div>
+
       {/* Main Content Area */}
       <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto">
         {children}

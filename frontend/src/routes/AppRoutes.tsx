@@ -18,7 +18,11 @@ import {
   SettingsPage,
 } from '../pages/Owner'
 import { EmployeeDashboardPage } from '../pages/Employee'
-import { SuperAdminDashboardPage } from '../pages/SuperAdmin'
+import {
+  SuperAdminDashboardPage,
+  SuperAdminSubscriptionsPage,
+  SuperAdminTelemetryPage,
+} from '../pages/SuperAdmin'
 import { DashboardLayout } from '../layouts/DashboardLayout'
 import { EmployeeLayout } from '../layouts/EmployeeLayout'
 import { SuperAdminLayout } from '../layouts/SuperAdminLayout'
@@ -66,6 +70,17 @@ export const AppRoutes: React.FC = () => {
   // Synchronize active sidebar route dynamically from current location pathname
   const pathAfterOwner = location.pathname.replace('/owner/', '').replace('/owner', '')
   const currentRoute = pathAfterOwner.split('/')[0] || 'dashboard'
+
+  const pathAfterSuperAdmin = location.pathname.replace('/superadmin/', '').replace('/superadmin', '')
+  const superAdminRoute = pathAfterSuperAdmin.split('/')[0] || 'tenants'
+
+  const handleSuperAdminNav = (routeId: string) => {
+    if (routeId === 'tenants') {
+      navigate('/superadmin')
+    } else {
+      navigate(`/superadmin/${routeId}`)
+    }
+  }
 
   const handleLoginSuccess = (portal: PortalType) => {
     if (portal === 'owner') {
@@ -228,9 +243,16 @@ export const AppRoutes: React.FC = () => {
         path="/superadmin/*"
         element={
           <ProtectedRoute allowedRoles={['superadmin']}>
-            <SuperAdminLayout onLogout={handleLogout}>
+            <SuperAdminLayout
+              currentRoute={superAdminRoute}
+              onRouteChange={handleSuperAdminNav}
+              onLogout={handleLogout}
+            >
               <Routes>
                 <Route path="" element={<SuperAdminDashboardPage />} />
+                <Route path="tenants" element={<SuperAdminDashboardPage />} />
+                <Route path="subscriptions" element={<SuperAdminSubscriptionsPage />} />
+                <Route path="telemetry" element={<SuperAdminTelemetryPage />} />
                 <Route path="*" element={<Navigate to="/superadmin" replace />} />
               </Routes>
             </SuperAdminLayout>

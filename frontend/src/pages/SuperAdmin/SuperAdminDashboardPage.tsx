@@ -188,7 +188,7 @@ export const SuperAdminDashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="text-3xl font-black text-emerald-700">99.98%</div>
-          <span className="text-[11px] text-[#78847F]">FastAPI + MySQL 8 cluster</span>
+          <span className="text-[11px] text-[#78847F]">FastAPI + MongoDB Atlas</span>
         </div>
       </div>
 
