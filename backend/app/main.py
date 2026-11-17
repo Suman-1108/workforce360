@@ -45,8 +45,8 @@ app = FastAPI(
     title=settings.APP_NAME,
     description="Enterprise Multi-Tenant SaaS Employee and Workforce Management Platform",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
@@ -142,6 +142,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
 
 
 @app.get("/", summary="Root Application Status")
+@app.get("/api", summary="API Root Operational Status")
 async def root():
     """Operational root endpoint providing platform health and documentation links."""
     return success_response(
@@ -149,7 +150,7 @@ async def root():
             "app": settings.APP_NAME,
             "environment": settings.APP_ENV,
             "version": "1.0.0",
-            "docs_url": "/docs",
+            "docs_url": "/api/docs",
             "api_v1": settings.API_V1_STR,
         },
         message=f"{settings.APP_NAME} operational.",
