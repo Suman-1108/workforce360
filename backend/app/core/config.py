@@ -1,3 +1,6 @@
+import os
+import tempfile
+from pathlib import Path
 from typing import List, Union
 import json
 from pydantic import field_validator
@@ -16,7 +19,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Database Configuration (MySQL 8.0.46)
+    # Database Configuration (MySQL 8.0.46 locally, cloud DB or /tmp SQLite fallback on Vercel)
     DB_HOST: str = "127.0.0.1"
     DB_PORT: int = 3306
     DB_USER: str = "workforce_app"
@@ -27,12 +30,25 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def assemble_db_connection(cls, v: Union[str, None], info) -> str:
-        if isinstance(v, str) and v.startswith("mysql"):
-            return v
+        if isinstance(v, str) and v.strip():
+            url = v.strip()
+            if url.startswith("mysql://"):
+                url = "mysql+pymysql://" + url[len("mysql://"):]
+            elif url.startswith("postgres://"):
+                url = "postgresql://" + url[len("postgres://"):]
+            return url
+
         data = info.data
+        host = data.get("DB_HOST", "127.0.0.1")
+
+        # On Vercel serverless, 127.0.0.1 MySQL is unreachable — fall back to writable /tmp SQLite
+        # so the app works immediately out of the box until an external DATABASE_URL is configured.
+        if os.environ.get("VERCEL") and host in ("127.0.0.1", "localhost", ""):
+            db_path = (Path(tempfile.gettempdir()) / "workforce360.db").as_posix()
+            return f"sqlite:///{db_path}"
+
         user = data.get("DB_USER", "workforce_app")
         password = data.get("DB_PASSWORD", "Root123")
-        host = data.get("DB_HOST", "127.0.0.1")
         port = data.get("DB_PORT", 3306)
         db = data.get("DB_NAME", "workforce360")
         return f"mysql+pymysql://{user}:{password}@{host}:{port}/{db}?charset=utf8mb4"

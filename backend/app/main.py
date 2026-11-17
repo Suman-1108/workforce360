@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.exceptions import AppException
 from app.core.logging import setup_logging, logger
 from app.database.connection import check_db_connection
+from app.database.session import ensure_database_initialized
 from app.middleware import (
     RequestLoggingMiddleware,
     SecurityHeadersMiddleware,
@@ -26,13 +27,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging()
     logger.info(f"Starting {settings.APP_NAME} in '{settings.APP_ENV}' environment...")
 
-    # Validate database connection on startup
+    # Validate database connection and auto-initialize schema/seed if empty
     db_health = check_db_connection()
     if db_health.get("connected"):
         logger.info(
             f"Database successfully connected: {db_health.get('database')} "
-            f"(User: {db_health.get('user')}, MySQL: {db_health.get('version')})"
+            f"(User: {db_health.get('user')}, Engine: {db_health.get('version')})"
         )
+        try:
+            ensure_database_initialized()
+        except Exception as exc:
+            logger.error(f"Startup DB initialization failed: {exc}")
     else:
         logger.error(f"Database connection error on startup: {db_health.get('error')}")
 

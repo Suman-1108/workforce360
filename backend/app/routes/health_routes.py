@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 from app.dependencies.database import get_db
+from app.database.connection import check_db_connection
 from app.core.config import settings
 from app.core.logging import logger
 from app.utils.response import success_response, error_response
@@ -12,15 +12,17 @@ router = APIRouter()
 
 @router.get("/health", summary="System & Database Health Diagnostic")
 def health_check(db: Session = Depends(get_db)):
-    """Verifies API operation and performs a live database ping (SELECT 1)."""
+    """Verifies API operation and performs a live database ping."""
     try:
-        # Perform live ping
-        result = db.execute(text("SELECT DATABASE(), USER(), VERSION()")).fetchone()
+        db_info = check_db_connection()
+        if not db_info.get("connected"):
+            raise RuntimeError(db_info.get("error", "Database unreachable"))
+
         db_details = {
             "status": "connected",
-            "database": result[0] if result else "unknown",
-            "user": result[1] if result else "unknown",
-            "mysql_version": result[2] if result else "unknown",
+            "database": db_info.get("database", "unknown"),
+            "user": db_info.get("user", "unknown"),
+            "version": db_info.get("version", "unknown"),
         }
 
         return success_response(
