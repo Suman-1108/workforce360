@@ -1,0 +1,359 @@
+import axios from 'axios';
+
+export const api = axios.create({
+  baseURL: '/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to attach JWT
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('wf360_token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor to catch unauthorized states
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear token and user if unauthorized
+      localStorage.removeItem('wf360_token');
+      localStorage.removeItem('wf360_user');
+      if (window.location.pathname !== '/login' && !window.location.pathname.startsWith('/auth')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const authApi = {
+  login: async (email: string, password: string) => {
+    const res = await api.post('/auth/login', { email, password });
+    const payload = res.data?.data || res.data;
+    const token = payload?.access_token || res.data?.access_token;
+    const user = payload?.user || res.data?.user;
+
+    if (token) {
+      localStorage.setItem('wf360_token', token);
+    }
+    if (user) {
+      localStorage.setItem('wf360_user', JSON.stringify(user));
+    }
+    return {
+      ...res.data,
+      access_token: token,
+      user: user,
+      role: user?.role,
+    };
+  },
+  register: async (data: any) => {
+    const res = await api.post('/auth/register', data);
+    const payload = res.data?.data || res.data;
+    const token = payload?.access_token || res.data?.access_token;
+    const user = payload?.user || res.data?.user;
+
+    if (token) {
+      localStorage.setItem('wf360_token', token);
+    }
+    if (user) {
+      localStorage.setItem('wf360_user', JSON.stringify(user));
+    }
+    return {
+      ...res.data,
+      access_token: token,
+      user: user,
+      role: user?.role,
+    };
+  },
+  getMe: async () => {
+    const res = await api.get('/auth/me');
+    return res.data;
+  },
+  updateProfile: async (data: { first_name?: string; last_name?: string; phone?: string; avatar_url?: string }) => {
+    const res = await api.put('/auth/profile', data);
+    return res.data;
+  },
+  changePassword: async (data: { current_password: string; new_password: string; confirm_password?: string }) => {
+    const res = await api.post('/auth/change-password', data);
+    return res.data;
+  },
+  getSessions: async () => {
+    const res = await api.get('/auth/sessions');
+    return res.data;
+  },
+  requestOtp: async (email: string, purpose = 'registration') => {
+    const res = await api.post('/auth/otp/request', { email, purpose });
+    return res.data;
+  },
+  verifyOtp: async (email: string, otp: string, purpose = 'registration') => {
+    const res = await api.post('/auth/otp/verify', { email, otp, purpose });
+    return res.data;
+  },
+  logout: () => {
+    localStorage.removeItem('wf360_token');
+    localStorage.removeItem('wf360_user');
+    window.location.href = '/auth/login';
+  },
+};
+
+export const employeesApi = {
+  validatePhone: async (phone: string, country: string = 'IN') => {
+    const res = await api.get('/employees/validate-phone', { params: { phone, country } });
+    return res.data;
+  },
+  list: async (params?: { department_id?: number; status?: string; search?: string }) => {
+    const res = await api.get('/employees', { params });
+    return res.data;
+  },
+  getById: async (id: number) => {
+    const res = await api.get(`/employees/${id}`);
+    return res.data;
+  },
+  create: async (data: any) => {
+    const res = await api.post('/employees', data);
+    return res.data;
+  },
+  update: async (id: number, data: any) => {
+    const res = await api.put(`/employees/${id}`, data);
+    return res.data;
+  },
+};
+
+export const attendanceApi = {
+  list: async (params?: { date?: string; employee_id?: number; status?: string }) => {
+    const res = await api.get('/attendance', { params });
+    return res.data;
+  },
+  getTodayPunchStatus: async () => {
+    const res = await api.get('/attendance/today');
+    return res.data?.data || res.data;
+  },
+  punchIn: async (data: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    address?: string;
+    selfie_url?: string;
+    notes?: string;
+  }) => {
+    const res = await api.post('/attendance/punch-in', data);
+    return res.data;
+  },
+  punchOut: async (data: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+    selfie_url?: string;
+    notes?: string;
+  }) => {
+    const res = await api.post('/attendance/punch-out', data);
+    return res.data;
+  },
+  resetTodayPunch: async () => {
+    const res = await api.post('/attendance/reset-today');
+    return res.data;
+  },
+};
+
+export const shiftsApi = {
+  list: async () => {
+    const res = await api.get('/shifts');
+    return res.data;
+  },
+  create: async (data: any) => {
+    const res = await api.post('/shifts', data);
+    return res.data;
+  },
+};
+
+export const departmentsApi = {
+  list: async () => {
+    const res = await api.get('/departments');
+    return res.data;
+  },
+  create: async (data: any) => {
+    const res = await api.post('/departments', data);
+    return res.data;
+  },
+};
+
+export const leavesApi = {
+  getTypes: async () => {
+    const res = await api.get('/leaves/types');
+    return res.data;
+  },
+  list: async (params?: { status?: string }) => {
+    const res = await api.get('/leaves', { params });
+    return res.data;
+  },
+  apply: async (data: { leave_type_id: number; start_date: string; end_date: string; reason: string }) => {
+    const res = await api.post('/leaves', data);
+    return res.data;
+  },
+  action: async (id: number, action: 'Approved' | 'Rejected', rejection_reason?: string) => {
+    const res = await api.post(`/leaves/${id}/action`, { action, rejection_reason });
+    return res.data;
+  },
+};
+
+export const uniformsApi = {
+  listItems: async (params?: { category?: string; search?: string }) => {
+    const res = await api.get('/uniforms/items', { params });
+    return res.data;
+  },
+  getItem: async (id: number | string) => {
+    const res = await api.get(`/uniforms/items/${id}`);
+    return res.data;
+  },
+  addItem: async (data: any) => {
+    const res = await api.post('/uniforms/items', data);
+    return res.data;
+  },
+  updateItem: async (id: number | string, data: any) => {
+    const res = await api.put(`/uniforms/items/${id}`, data);
+    return res.data;
+  },
+  deleteItem: async (id: number | string) => {
+    const res = await api.delete(`/uniforms/items/${id}`);
+    return res.data;
+  },
+  listDistributions: async (params?: { employee_id?: number; uniform_item_id?: number; status?: string }) => {
+    const res = await api.get('/uniforms/distributions', { params });
+    return res.data;
+  },
+  issue: async (data: { employee_id: number; uniform_item_id: number; size: string; quantity: number; notes?: string }) => {
+    const res = await api.post('/uniforms/issue', data);
+    return res.data;
+  },
+  bulkIssue: async (data: {
+    uniform_item_id: number;
+    employee_ids?: number[];
+    department_id?: number;
+    branch_id?: number;
+    size: string;
+    quantity: number;
+    issued_date?: string;
+    notes?: string;
+  }) => {
+    const res = await api.post('/uniforms/bulk-issue', data);
+    return res.data;
+  },
+  actionDistribution: async (distId: number, status: 'Returned' | 'Damaged' | 'Lost', notes?: string) => {
+    const res = await api.post(`/uniforms/distributions/${distId}/action`, { status, notes });
+    return res.data;
+  },
+  getMyUniforms: async () => {
+    const res = await api.get('/uniforms/my-uniforms');
+    return res.data;
+  },
+};
+
+export const reportsApi = {
+  getSummary: async () => {
+    const res = await api.get('/reports/summary');
+    return res.data;
+  },
+  getWeeklyAttendance: async () => {
+    const res = await api.get('/reports/weekly-attendance');
+    return res.data;
+  },
+  getDailyTrends: async () => {
+    const res = await api.get('/reports/daily-trends');
+    return res.data;
+  },
+  getDepartmentDistribution: async () => {
+    const res = await api.get('/reports/department-distribution');
+    return res.data;
+  },
+  getShiftDistribution: async () => {
+    const res = await api.get('/reports/shift-distribution');
+    return res.data;
+  },
+  getRecentActivity: async () => {
+    const res = await api.get('/reports/recent-activity');
+    return res.data;
+  },
+};
+
+export const subscriptionsApi = {
+  getPlans: async () => {
+    const res = await api.get('/subscriptions/plans');
+    return res.data;
+  },
+  getCurrent: async () => {
+    const res = await api.get('/subscriptions/current');
+    return res.data;
+  },
+  createCheckout: async (data: { plan_code: string; billing_cycle?: string }) => {
+    const res = await api.post('/subscriptions/checkout', data);
+    return res.data;
+  },
+  verifyRazorpay: async (data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    plan_code: string;
+    billing_cycle?: string;
+  }) => {
+    const res = await api.post('/subscriptions/razorpay/verify', data);
+    return res.data;
+  },
+  getHistory: async () => {
+    const res = await api.get('/subscriptions/history');
+    return res.data;
+  },
+  cancel: async () => {
+    const res = await api.post('/subscriptions/cancel');
+    return res.data;
+  },
+};
+
+export const superAdminApi = {
+  getStats: async () => {
+    const res = await api.get('/superadmin/stats');
+    return res.data?.data || res.data;
+  },
+  listTenants: async () => {
+    const res = await api.get('/superadmin/tenants');
+    return res.data?.data || res.data;
+  },
+  updateTenantStatus: async (tenantId: number, status: 'active' | 'suspended') => {
+    const res = await api.post(`/superadmin/tenants/${tenantId}/status`, { status });
+    return res.data?.data || res.data;
+  },
+};
+
+export const organizationApi = {
+  getProfile: async () => {
+    const res = await api.get('/organizations/profile');
+    return res.data;
+  },
+  updateProfile: async (data: any) => {
+    const res = await api.put('/organizations/profile', data);
+    return res.data;
+  },
+  listBranches: async (params?: { is_active?: boolean; search?: string }) => {
+    const res = await api.get('/organizations/branches', { params });
+    return res.data;
+  },
+};
+
+export const settingsApi = {
+  getAll: async () => {
+    const res = await api.get('/organizations/settings');
+    return res.data;
+  },
+  saveAll: async (data: any) => {
+    const res = await api.put('/organizations/settings', data);
+    return res.data;
+  },
+};
