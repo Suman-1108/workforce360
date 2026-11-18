@@ -116,6 +116,7 @@ export const ShiftsPage: React.FC = () => {
         status: 'Active',
       }
       setShifts((prev) => [created, ...prev])
+      window.dispatchEvent(new Event('wf360:refresh-counts'))
       setModalOpen(false)
       setNewShift({
         name: '',
@@ -143,6 +144,7 @@ export const ShiftsPage: React.FC = () => {
         status: 'Active',
       }
       setShifts((prev) => [created, ...prev])
+      window.dispatchEvent(new Event('wf360:refresh-counts'))
       setModalOpen(false)
       setNewShift({
         name: '',

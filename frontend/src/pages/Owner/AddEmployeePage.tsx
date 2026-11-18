@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { Button, Input, Select, PhoneInput } from '../../components/common'
 import type { Employee, EmploymentType } from '../../types/employee'
-import { employeesApi } from '../../services/api'
+import { employeesApi, organizationApi } from '../../services/api'
 
 export interface AddEmployeePageProps {
   onBack: () => void
@@ -28,7 +28,7 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
     personal: false,
     employment: false,
   })
-  const [orgName, setOrgName] = useState('Apex Global Technologies')
+  const [orgName, setOrgName] = useState('WorkForce 360')
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
@@ -39,10 +39,21 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
       if (stored) {
         const parsed = JSON.parse(stored)
         if (parsed?.tenant?.name) setOrgName(parsed.tenant.name)
+        const ownerName = [parsed?.first_name, parsed?.last_name].filter(Boolean).join(' ').trim()
+        if (ownerName) {
+          setFormData((prev) => ({ ...prev, reportingManager: ownerName }))
+        }
       }
     } catch {
       // ignore
     }
+    organizationApi
+      .getProfile()
+      .then((res) => {
+        const profile = res?.data ?? res
+        if (profile?.name) setOrgName(profile.name)
+      })
+      .catch(() => {})
   }, [])
 
   // Form State
@@ -60,7 +71,7 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
     branch: 'Tech Park HQ',
     joiningDate: new Date().toISOString().slice(0, 10),
     employmentType: 'Full-time' as EmploymentType,
-    reportingManager: 'Marcus Vance',
+    reportingManager: 'Organization Owner',
     // Contact
     street: '',
     city: 'Chicago',
@@ -152,6 +163,7 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
         branch_id: 1,
       })
       setIsLoading(false)
+      window.dispatchEvent(new Event('wf360:refresh-counts'))
       setSuccessMessage(
         `Employee ${formData.fullName} (${formData.employeeId}) enrolled! Login email & password sent to ${formData.email.trim()}.`
       )

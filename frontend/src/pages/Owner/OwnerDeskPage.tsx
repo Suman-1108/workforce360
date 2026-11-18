@@ -170,6 +170,7 @@ export const OwnerDeskPage: React.FC = () => {
         owner_response: ticketResponses[ticketId] || '',
       })
       notify('Support ticket status & response updated.')
+      window.dispatchEvent(new Event('wf360:refresh-counts'))
       await loadAll()
     } catch {
       notify('Failed to update support ticket.')

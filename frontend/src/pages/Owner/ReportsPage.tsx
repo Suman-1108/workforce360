@@ -21,14 +21,21 @@ import { reportsApi } from '../../services/api'
 export const ReportsPage: React.FC = () => {
   const [selectedRange, setSelectedRange] = useState<'this_month' | 'last_month' | 'quarter'>('this_month')
 
-  const defaultMonthlyReportData = [
-    { week: 'Week 1', onTime: 94, late: 4, absent: 2 },
-    { week: 'Week 2', onTime: 92, late: 6, absent: 2 },
-    { week: 'Week 3', onTime: 91, late: 7, absent: 2 },
-    { week: 'Week 4', onTime: 93, late: 5, absent: 2 },
-  ]
-
-  const [weeklyData, setWeeklyData] = useState(defaultMonthlyReportData)
+  const [weeklyData, setWeeklyData] = useState<
+    Array<{ week: string; onTime: number; late: number; absent: number }>
+  >([
+    { week: 'Week 1', onTime: 0, late: 0, absent: 0 },
+    { week: 'Week 2', onTime: 0, late: 0, absent: 0 },
+    { week: 'Week 3', onTime: 0, late: 0, absent: 0 },
+    { week: 'Week 4', onTime: 0, late: 0, absent: 0 },
+  ])
+  const [summary, setSummary] = useState<{
+    total_employees?: number
+    total_attendance_records?: number
+    late_punches_week?: number
+    approved_leaves_month?: number
+    total_hours_clocked?: number
+  }>({})
 
   useEffect(() => {
     reportsApi
@@ -39,11 +46,23 @@ export const ReportsPage: React.FC = () => {
         }
       })
       .catch((err) => console.error('Failed to load weekly attendance:', err))
+
+    reportsApi
+      .getSummary()
+      .then((data) => {
+        if (data && typeof data === 'object') {
+          setSummary(data)
+        }
+      })
+      .catch((err) => console.error('Failed to load reports summary:', err))
   }, [selectedRange])
 
   const handleDownload = (reportName: string, format: 'csv' | 'xlsx') => {
-    const csvContent =
-      'data:text/csv;charset=utf-8,Metric,Week1,Week2,Week3,Week4\nOnTime,94%,92%,91%,93%\nLate,4%,6%,7%,5%\nAbsent,2%,2%,2%,2%\n'
+    const header = `Metric,${weeklyData.map((w) => w.week).join(',')}`
+    const onTimeRow = `OnTime,${weeklyData.map((w) => `${w.onTime}%`).join(',')}`
+    const lateRow = `Late,${weeklyData.map((w) => `${w.late}%`).join(',')}`
+    const absentRow = `Absent,${weeklyData.map((w) => `${w.absent}%`).join(',')}`
+    const csvContent = `data:text/csv;charset=utf-8,${header}\n${onTimeRow}\n${lateRow}\n${absentRow}\n`
     const encodedUri = encodeURI(csvContent)
     const link = document.createElement('a')
     link.setAttribute('href', encodedUri)
@@ -56,29 +75,31 @@ export const ReportsPage: React.FC = () => {
     document.body.removeChild(link)
   }
 
+  const monthName = new Date().toLocaleString('en-US', { month: 'short' })
+
   const reportsCatalog = [
     {
       title: 'Daily Master Attendance Telemetry',
       description: 'Includes GPS geofence timestamps, facial selfie validation IDs, and working durations.',
-      metrics: '148 Active Records Daily',
+      metrics: `${summary.total_employees ?? 0} Active Employees • ${summary.total_attendance_records ?? 0} Logs`,
       format: 'CSV / Excel',
     },
     {
       title: 'Late Arrivals & Punctuality Audit',
       description: 'Tracks recurring grace-period overages, tardiness patterns, and shift delay reasons.',
-      metrics: '8 Incidents Recorded This Week',
+      metrics: `${summary.late_punches_week ?? 0} Incidents Recorded This Week`,
       format: 'CSV / PDF',
     },
     {
       title: 'Department Absenteeism & Leave Ledger',
       description: 'Summary of annual, medical, and casual leave consumption per operational unit.',
-      metrics: '12 Leaves Consumed in Nov',
+      metrics: `${summary.approved_leaves_month ?? 0} Leaves Approved in ${monthName}`,
       format: 'CSV / Excel',
     },
     {
       title: 'Shift Overtime & Payroll Hours',
       description: 'Payroll-ready export calculating total regular hours, break deductions, and authorized overtime.',
-      metrics: '2,420 Hours Clocked',
+      metrics: `${(summary.total_hours_clocked ?? 0).toLocaleString()} Hours Clocked`,
       format: 'CSV / Excel',
     },
   ]

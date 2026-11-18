@@ -25,6 +25,7 @@ export interface TopbarProps {
   userRole?: string
   orgName?: string
   branchName?: string
+  branches?: string[]
   onNavigateToNotifications?: () => void
   onNavigateToSettings?: () => void
   onNavigateToSubscription?: () => void
@@ -35,11 +36,12 @@ export const Topbar: React.FC<TopbarProps> = ({
   onToggleCollapse,
   isCollapsed = false,
   onLogout,
-  userName = 'Marcus Vance',
-  userEmail = 'owner@acmeglobal.com',
+  userName = 'Organization Owner',
+  userEmail = '',
   userRole = 'Organization Owner',
-  orgName = 'Acme Logistics Global',
-  branchName = 'HQ - Tech Park Branch',
+  orgName = 'WorkForce 360',
+  branchName = 'Main Branch',
+  branches = [],
   onNavigateToNotifications,
   onNavigateToSettings,
   onNavigateToSubscription,
@@ -51,6 +53,12 @@ export const Topbar: React.FC<TopbarProps> = ({
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false)
 
   useEffect(() => {
+    if (branchName && (!selectedBranch || selectedBranch === 'Main Branch')) {
+      setSelectedBranch(branchName)
+    }
+  }, [branchName])
+
+  useEffect(() => {
     NotificationService.getUnreadCount()
       .then((res) => {
         if (res && typeof res.unread_count === 'number') {
@@ -60,11 +68,7 @@ export const Topbar: React.FC<TopbarProps> = ({
       .catch((err) => console.error('Failed to load unread notification count:', err))
   }, [])
 
-  const branches = [
-    'HQ - Tech Park Branch',
-    'Main Logistics Hub (South Gate)',
-    'Fulfillment Center B',
-  ]
+  const branchOptions = branches.length > 0 ? branches : [selectedBranch || branchName]
 
   return (
     <header className="sticky top-0 z-30 bg-[#F5F7F1]/95 backdrop-blur-md border-b border-[#E5EAE4] px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between transition-all">
@@ -120,7 +124,7 @@ export const Topbar: React.FC<TopbarProps> = ({
               <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#78847F] border-b border-[#E5EAE4] mb-1">
                 Select Active Branch
               </div>
-              {branches.map((b) => (
+              {branchOptions.map((b) => (
                 <button
                   key={b}
                   onClick={() => {

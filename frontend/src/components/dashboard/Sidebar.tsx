@@ -20,12 +20,25 @@ import {
   Landmark,
 } from 'lucide-react'
 
+export interface SidebarCounts {
+  employees?: number
+  checkedInToday?: number
+  activeShifts?: number
+  departments?: number
+  pendingLeaves?: number
+  uniformItems?: number
+  openTickets?: number
+  unreadNotifications?: number
+}
+
 export interface SidebarProps {
   currentRoute: string
   onRouteChange: (route: string) => void
   onLogout: () => void
   orgName?: string
   planName?: string
+  subscriptionStatus?: string
+  navCounts?: SidebarCounts
   // Desktop persistent collapse state (260px vs 76px)
   isCollapsed?: boolean
   onToggleCollapse?: () => void
@@ -41,8 +54,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentRoute,
   onRouteChange,
   onLogout,
-  orgName = 'Acme Logistics Global',
-  planName = 'Professional Tier',
+  orgName = 'WorkForce 360',
+  planName = 'Standard Plan',
+  subscriptionStatus = 'Active',
+  navCounts,
   isCollapsed = false,
   onToggleCollapse,
   isMobileOpen = false,
@@ -54,17 +69,92 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const mobileOpen = isMobileOpen ?? isOpen ?? false
   const closeMobile = onMobileClose ?? onClose ?? (() => {})
 
-  const navItems = [
+  const navItems: Array<{
+    id: string
+    label: string
+    icon: React.ReactNode
+    badge?: string
+    badgeTone?: 'live' | 'alert' | 'neutral'
+  }> = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-4.5 w-4.5 shrink-0" /> },
-    { id: 'employees', label: 'Employees', icon: <Users className="h-4.5 w-4.5 shrink-0" />, badge: '148' },
-    { id: 'attendance', label: 'Attendance', icon: <MapPin className="h-4.5 w-4.5 shrink-0" />, badge: 'Live' },
-    { id: 'shifts', label: 'Shifts', icon: <Calendar className="h-4.5 w-4.5 shrink-0" /> },
-    { id: 'departments', label: 'Departments', icon: <Building className="h-4.5 w-4.5 shrink-0" /> },
-    { id: 'leave', label: 'Leave Management', icon: <Coffee className="h-4.5 w-4.5 shrink-0" />, badge: '3' },
-    { id: 'uniforms', label: 'Uniform Management', icon: <Shirt className="h-4.5 w-4.5 shrink-0" /> },
-    { id: 'desk', label: 'Employee Desk & Payroll', icon: <Landmark className="h-4.5 w-4.5 shrink-0" />, badge: 'New' },
+    {
+      id: 'employees',
+      label: 'Employees',
+      icon: <Users className="h-4.5 w-4.5 shrink-0" />,
+      badge: typeof navCounts?.employees === 'number' ? String(navCounts.employees) : undefined,
+      badgeTone: 'neutral',
+    },
+    {
+      id: 'attendance',
+      label: 'Attendance',
+      icon: <MapPin className="h-4.5 w-4.5 shrink-0" />,
+      badge:
+        typeof navCounts?.checkedInToday === 'number' && navCounts.checkedInToday > 0
+          ? `${navCounts.checkedInToday} Live`
+          : 'Live',
+      badgeTone: 'live',
+    },
+    {
+      id: 'shifts',
+      label: 'Shifts',
+      icon: <Calendar className="h-4.5 w-4.5 shrink-0" />,
+      badge:
+        typeof navCounts?.activeShifts === 'number' && navCounts.activeShifts > 0
+          ? String(navCounts.activeShifts)
+          : undefined,
+      badgeTone: 'neutral',
+    },
+    {
+      id: 'departments',
+      label: 'Departments',
+      icon: <Building className="h-4.5 w-4.5 shrink-0" />,
+      badge:
+        typeof navCounts?.departments === 'number' && navCounts.departments > 0
+          ? String(navCounts.departments)
+          : undefined,
+      badgeTone: 'neutral',
+    },
+    {
+      id: 'leave',
+      label: 'Leave Management',
+      icon: <Coffee className="h-4.5 w-4.5 shrink-0" />,
+      badge:
+        typeof navCounts?.pendingLeaves === 'number' && navCounts.pendingLeaves > 0
+          ? String(navCounts.pendingLeaves)
+          : undefined,
+      badgeTone: 'alert',
+    },
+    {
+      id: 'uniforms',
+      label: 'Uniform Management',
+      icon: <Shirt className="h-4.5 w-4.5 shrink-0" />,
+      badge:
+        typeof navCounts?.uniformItems === 'number' && navCounts.uniformItems > 0
+          ? String(navCounts.uniformItems)
+          : undefined,
+      badgeTone: 'neutral',
+    },
+    {
+      id: 'desk',
+      label: 'Employee Desk & Payroll',
+      icon: <Landmark className="h-4.5 w-4.5 shrink-0" />,
+      badge:
+        typeof navCounts?.openTickets === 'number' && navCounts.openTickets > 0
+          ? String(navCounts.openTickets)
+          : undefined,
+      badgeTone: 'alert',
+    },
     { id: 'reports', label: 'Reports & Analytics', icon: <BarChart3 className="h-4.5 w-4.5 shrink-0" /> },
-    { id: 'notifications', label: 'Notifications', icon: <Bell className="h-4.5 w-4.5 shrink-0" /> },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      icon: <Bell className="h-4.5 w-4.5 shrink-0" />,
+      badge:
+        typeof navCounts?.unreadNotifications === 'number' && navCounts.unreadNotifications > 0
+          ? String(navCounts.unreadNotifications)
+          : undefined,
+      badgeTone: 'alert',
+    },
     { id: 'subscription', label: 'Subscription', icon: <CreditCard className="h-4.5 w-4.5 shrink-0" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="h-4.5 w-4.5 shrink-0" /> },
   ]
@@ -129,7 +219,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {planName}
                   </span>
                   <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
-                    Active
+                    {subscriptionStatus}
                   </span>
                 </div>
               </div>
@@ -170,8 +260,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ${
                             isActive
                               ? 'bg-white/20 text-white'
-                              : item.badge === 'Live'
+                              : item.badgeTone === 'live'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : item.badgeTone === 'neutral'
+                              ? 'bg-[#E6F3F1] text-[#075E54] border border-[#BDE0D9]'
                               : 'bg-[#FFF0E6] text-[#FF8B45] border border-[#FFD4BA]'
                           }
                         `}
@@ -273,7 +365,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {planName}
                   </span>
                   <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200 shrink-0">
-                    Active
+                    {subscriptionStatus}
                   </span>
                 </div>
               </div>
@@ -322,8 +414,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ${
                             isActive
                               ? 'bg-white/20 text-white'
-                              : item.badge === 'Live'
+                              : item.badgeTone === 'live'
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : item.badgeTone === 'neutral'
+                              ? 'bg-[#E6F3F1] text-[#075E54] border border-[#BDE0D9]'
                               : 'bg-[#FFF0E6] text-[#FF8B45] border border-[#FFD4BA]'
                           }
                         `}

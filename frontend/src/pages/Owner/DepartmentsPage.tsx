@@ -82,6 +82,7 @@ export const DepartmentsPage: React.FC = () => {
       }
 
       setDepartments((prev) => [...prev, created])
+      window.dispatchEvent(new Event('wf360:refresh-counts'))
       setModalOpen(false)
       setNewDept({ name: '', code: '', headName: '', headEmail: '', description: '' })
     } catch (err) {
@@ -97,6 +98,7 @@ export const DepartmentsPage: React.FC = () => {
         description: newDept.description || 'Department created.',
       }
       setDepartments((prev) => [...prev, created])
+      window.dispatchEvent(new Event('wf360:refresh-counts'))
       setModalOpen(false)
       setNewDept({ name: '', code: '', headName: '', headEmail: '', description: '' })
     }

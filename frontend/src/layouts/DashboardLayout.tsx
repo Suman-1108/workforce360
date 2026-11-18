@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { Sidebar } from '../components/dashboard/Sidebar'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Sidebar, type SidebarCounts } from '../components/dashboard/Sidebar'
 import { Topbar } from '../components/dashboard/Topbar'
+import { reportsApi, organizationApi } from '../services/api'
 
 export interface DashboardLayoutProps {
   children: React.ReactNode
@@ -19,12 +20,118 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   currentRoute,
   onRouteChange,
   onLogout,
-  userName = 'Marcus Vance',
-  userEmail = 'owner@acmeglobal.com',
-  orgName = 'Acme Logistics Global',
-  planName = 'Professional Tier',
-  branchName = 'HQ - Tech Park Branch',
+  userName,
+  userEmail,
+  orgName,
+  planName,
+  branchName,
 }) => {
+  // Read logged-in user details from localStorage
+  const [storedUser, setStoredUser] = useState<{
+    first_name?: string
+    last_name?: string
+    email?: string
+    role?: string
+    tenant?: { name?: string }
+  }>({})
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('wf360_user')
+      if (raw) {
+        setStoredUser(JSON.parse(raw))
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [])
+
+  const [navCounts, setNavCounts] = useState<SidebarCounts>({})
+  const [liveOrgName, setLiveOrgName] = useState<string>('')
+  const [livePlanName, setLivePlanName] = useState<string>('')
+  const [liveSubStatus, setLiveSubStatus] = useState<string>('Active')
+  const [liveBranches, setLiveBranches] = useState<string[]>([])
+
+  const fetchDynamicLayoutData = useCallback(() => {
+    reportsApi
+      .getSummary()
+      .then((summary) => {
+        if (!summary || typeof summary !== 'object') return
+        setNavCounts({
+          employees:
+            typeof summary.total_employees === 'number' ? summary.total_employees : undefined,
+          checkedInToday:
+            typeof summary.checked_in_today === 'number'
+              ? summary.checked_in_today
+              : typeof summary.present_today === 'number'
+              ? summary.present_today
+              : 0,
+          activeShifts:
+            typeof summary.active_shifts === 'number' ? summary.active_shifts : undefined,
+          departments:
+            typeof summary.total_departments === 'number' ? summary.total_departments : undefined,
+          pendingLeaves:
+            typeof summary.pending_leaves === 'number' ? summary.pending_leaves : undefined,
+          uniformItems:
+            typeof summary.total_uniform_items === 'number'
+              ? summary.total_uniform_items
+              : undefined,
+          openTickets:
+            typeof summary.open_tickets === 'number' ? summary.open_tickets : undefined,
+          unreadNotifications:
+            typeof summary.unread_notifications === 'number'
+              ? summary.unread_notifications
+              : undefined,
+        })
+        if (summary.organization_name) setLiveOrgName(summary.organization_name)
+        if (summary.plan_name) setLivePlanName(summary.plan_name)
+        if (summary.subscription_status) setLiveSubStatus(summary.subscription_status)
+      })
+      .catch(() => {})
+
+    organizationApi
+      .listBranches()
+      .then((res) => {
+        const raw = res?.data ?? res
+        const items = Array.isArray(raw) ? raw : raw?.items || []
+        const names = items.map((b: any) => b?.name).filter(Boolean)
+        if (names.length > 0) {
+          setLiveBranches(names)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // Refresh dynamic sidebar counts on mount, on route change, on custom event, and periodically
+  useEffect(() => {
+    fetchDynamicLayoutData()
+  }, [currentRoute, fetchDynamicLayoutData])
+
+  useEffect(() => {
+    const handler = () => fetchDynamicLayoutData()
+    window.addEventListener('wf360:refresh-counts', handler)
+    const interval = window.setInterval(fetchDynamicLayoutData, 60000)
+    return () => {
+      window.removeEventListener('wf360:refresh-counts', handler)
+      window.clearInterval(interval)
+    }
+  }, [fetchDynamicLayoutData])
+
+  const resolvedUserName =
+    userName ||
+    [storedUser.first_name, storedUser.last_name].filter(Boolean).join(' ').trim() ||
+    'Organization Owner'
+  const resolvedUserEmail = userEmail || storedUser.email || ''
+  const resolvedUserRole =
+    storedUser.role === 'superadmin'
+      ? 'Super Admin'
+      : storedUser.role === 'manager'
+      ? 'Branch Manager'
+      : 'Organization Owner'
+  const resolvedOrgName = orgName || liveOrgName || storedUser.tenant?.name || 'WorkForce 360'
+  const resolvedPlanName = planName || livePlanName || 'Standard Plan'
+  const resolvedBranchName = branchName || liveBranches[0] || 'Main Branch'
+
   // Read saved desktop sidebar collapsed preference from localStorage
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     try {
@@ -74,8 +181,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         isMobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
         onLogout={onLogout}
-        orgName={orgName}
-        planName={planName}
+        orgName={resolvedOrgName}
+        planName={resolvedPlanName}
+        subscriptionStatus={liveSubStatus}
+        navCounts={navCounts}
       />
 
       {/* Main Content Container
@@ -94,10 +203,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           onToggleCollapse={handleToggleCollapse}
           isCollapsed={isCollapsed}
           onLogout={onLogout}
-          userName={userName}
-          userEmail={userEmail}
-          orgName={orgName}
-          branchName={branchName}
+          userName={resolvedUserName}
+          userEmail={resolvedUserEmail}
+          userRole={resolvedUserRole}
+          orgName={resolvedOrgName}
+          branchName={resolvedBranchName}
+          branches={liveBranches}
           onNavigateToNotifications={() => onRouteChange('notifications')}
           onNavigateToSettings={() => onRouteChange('settings')}
           onNavigateToSubscription={() => onRouteChange('subscription')}

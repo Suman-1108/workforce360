@@ -79,6 +79,7 @@ export const LeavePage: React.FC = () => {
     try {
       await leavesApi.action(Number(id), newStatus)
       fetchLeaves()
+      window.dispatchEvent(new Event('wf360:refresh-counts'))
     } catch (err) {
       console.error('Failed to update leave action on backend:', err)
     }
