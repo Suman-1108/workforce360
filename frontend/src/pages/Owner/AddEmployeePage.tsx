@@ -226,9 +226,6 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#183B36] tracking-tight">
             Add New Employee
           </h1>
-          <p className="text-xs sm:text-sm text-[#78847F] mt-1">
-            Enroll an employee into your organization. Details are saved manually when you click Save Employee.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
