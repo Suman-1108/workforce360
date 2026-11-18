@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import {
   ArrowLeft,
+  ArrowRight,
   UserPlus,
   User,
   Briefcase,
@@ -8,7 +9,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Building,
-  Save,
+  Lock,
   Shirt,
   FileCheck,
 } from 'lucide-react'
@@ -87,6 +88,47 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
     pantsSize: '32',
     shoeSize: '9',
   })
+
+  const isPersonalValid = (): boolean => {
+    return (
+      formData.fullName.trim().length > 0 &&
+      formData.email.trim().length > 0 &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()) &&
+      Boolean(formData.phone && formData.phone.replace(/\D/g, '').length >= 7)
+    )
+  }
+
+  const isEmploymentValid = (): boolean => {
+    return (
+      formData.employeeId.trim().length > 0 &&
+      formData.designation.trim().length > 0 &&
+      Boolean(formData.joiningDate)
+    )
+  }
+
+  const handleTabClick = (targetTab: 'personal' | 'employment' | 'contact') => {
+    setErrorMessage('')
+    if (targetTab === 'personal') {
+      setActiveTab('personal')
+      return
+    }
+    if (targetTab === 'employment') {
+      if (!validatePersonalStep()) {
+        return
+      }
+      setActiveTab('employment')
+      return
+    }
+    if (targetTab === 'contact') {
+      if (!validatePersonalStep()) {
+        return
+      }
+      if (!validateEmploymentStep()) {
+        return
+      }
+      setActiveTab('contact')
+    }
+  }
 
   const validatePersonalStep = (): boolean => {
     setErrorMessage('')
@@ -220,25 +262,12 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
         </span>
       </div>
 
-      {/* Page Header with Action Button */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#183B36] tracking-tight">
             Add New Employee
           </h1>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="accent"
-            size="md"
-            isLoading={isLoading}
-            onClick={handleManualSave}
-            leftIcon={<Save className="h-4 w-4" />}
-          >
-            Save Employee
-          </Button>
         </div>
       </div>
 
@@ -259,11 +288,12 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
 
       {/* Form Container */}
       <div className="bg-white rounded-4xl border border-[#E5EAE4] card-soft-shadow overflow-hidden">
-        {/* Step Navigation Tabs — Freely clickable */}
+        {/* Step Navigation Tabs with Dynamic Step Locks */}
         <div className="flex border-b border-[#E5EAE4] bg-[#FBFDFB]">
+          {/* Tab 1: Personal Information */}
           <button
             type="button"
-            onClick={() => setActiveTab('personal')}
+            onClick={() => handleTabClick('personal')}
             className={`
               flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2 cursor-pointer
               ${
@@ -273,40 +303,76 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
               }
             `}
           >
-            <User className="h-4 w-4" />
+            {isPersonalValid() ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            ) : (
+              <User className="h-4 w-4 shrink-0" />
+            )}
             <span>1. Personal Information</span>
           </button>
 
+          {/* Tab 2: Employment Details (Locked until Tab 1 valid) */}
           <button
             type="button"
-            onClick={() => setActiveTab('employment')}
+            onClick={() => handleTabClick('employment')}
             className={`
-              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2 cursor-pointer
+              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2
               ${
-                activeTab === 'employment'
-                  ? 'border-[#075E54] text-[#075E54] bg-white'
-                  : 'border-transparent text-[#78847F] hover:text-[#183B36] hover:bg-white/50'
+                !isPersonalValid()
+                  ? 'cursor-not-allowed opacity-60 text-gray-400 border-transparent bg-gray-50/50'
+                  : activeTab === 'employment'
+                  ? 'border-[#075E54] text-[#075E54] bg-white cursor-pointer'
+                  : 'border-transparent text-[#78847F] hover:text-[#183B36] hover:bg-white/50 cursor-pointer'
               }
             `}
+            title={!isPersonalValid() ? 'Complete Personal Information first to unlock' : undefined}
           >
-            <Briefcase className="h-4 w-4" />
+            {!isPersonalValid() ? (
+              <Lock className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+            ) : isEmploymentValid() ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            ) : (
+              <Briefcase className="h-4 w-4 shrink-0" />
+            )}
             <span>2. Employment Details</span>
+            {!isPersonalValid() && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200 text-gray-500 uppercase ml-1">
+                Locked
+              </span>
+            )}
           </button>
 
+          {/* Tab 3: Contact & Documents (Locked until Tab 1 & Tab 2 valid) */}
           <button
             type="button"
-            onClick={() => setActiveTab('contact')}
+            onClick={() => handleTabClick('contact')}
             className={`
-              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2 cursor-pointer
+              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2
               ${
-                activeTab === 'contact'
-                  ? 'border-[#075E54] text-[#075E54] bg-white'
-                  : 'border-transparent text-[#78847F] hover:text-[#183B36] hover:bg-white/50'
+                !isPersonalValid() || !isEmploymentValid()
+                  ? 'cursor-not-allowed opacity-60 text-gray-400 border-transparent bg-gray-50/50'
+                  : activeTab === 'contact'
+                  ? 'border-[#075E54] text-[#075E54] bg-white cursor-pointer'
+                  : 'border-transparent text-[#78847F] hover:text-[#183B36] hover:bg-white/50 cursor-pointer'
               }
             `}
+            title={
+              !isPersonalValid() || !isEmploymentValid()
+                ? 'Complete Personal & Employment Details first to unlock'
+                : undefined
+            }
           >
-            <PhoneCall className="h-4 w-4" />
+            {!isPersonalValid() || !isEmploymentValid() ? (
+              <Lock className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+            ) : (
+              <PhoneCall className="h-4 w-4 shrink-0" />
+            )}
             <span>3. Contact &amp; Documents</span>
+            {(!isPersonalValid() || !isEmploymentValid()) && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200 text-gray-500 uppercase ml-1">
+                Locked
+              </span>
+            )}
           </button>
         </div>
 
@@ -314,7 +380,13 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            handleManualSave()
+            if (activeTab === 'personal') {
+              if (validatePersonalStep()) setActiveTab('employment')
+            } else if (activeTab === 'employment') {
+              if (validateEmploymentStep()) setActiveTab('contact')
+            } else {
+              handleManualSave()
+            }
           }}
           onKeyDown={(e) => {
             // Prevent accidental submit when typing details and pressing Enter
@@ -640,11 +712,12 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
                   variant="outline"
                   size="md"
                   onClick={() => {
+                    setErrorMessage('')
                     if (activeTab === 'contact') setActiveTab('employment')
-                    if (activeTab === 'employment') setActiveTab('personal')
+                    else if (activeTab === 'employment') setActiveTab('personal')
                   }}
                 >
-                  Previous Step
+                  &larr; Previous Step
                 </Button>
               ) : (
                 <Button type="button" variant="ghost" size="md" onClick={onBack}>
@@ -654,33 +727,46 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
             </div>
 
             <div className="flex items-center gap-3">
-              {activeTab !== 'contact' && (
+              {activeTab === 'personal' && (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="primary"
                   size="md"
                   onClick={() => {
-                    if (activeTab === 'personal') {
-                      if (validatePersonalStep()) setActiveTab('employment')
-                    } else if (activeTab === 'employment') {
-                      if (validateEmploymentStep()) setActiveTab('contact')
-                    }
+                    if (validatePersonalStep()) setActiveTab('employment')
                   }}
+                  rightIcon={<ArrowRight className="h-4 w-4" />}
                 >
-                  Next Tab &rarr;
+                  Next Step &rarr;
                 </Button>
               )}
 
-              <Button
-                type="button"
-                variant="accent"
-                size="lg"
-                isLoading={isLoading}
-                onClick={handleManualSave}
-                leftIcon={<UserPlus className="h-4 w-4" />}
-              >
-                Save & Enroll Employee
-              </Button>
+              {activeTab === 'employment' && (
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  onClick={() => {
+                    if (validateEmploymentStep()) setActiveTab('contact')
+                  }}
+                  rightIcon={<ArrowRight className="h-4 w-4" />}
+                >
+                  Next Step &rarr;
+                </Button>
+              )}
+
+              {activeTab === 'contact' && (
+                <Button
+                  type="button"
+                  variant="accent"
+                  size="lg"
+                  isLoading={isLoading}
+                  onClick={handleManualSave}
+                  leftIcon={<UserPlus className="h-4 w-4" />}
+                >
+                  Save &amp; Enroll Employee
+                </Button>
+              )}
             </div>
           </div>
         </form>
