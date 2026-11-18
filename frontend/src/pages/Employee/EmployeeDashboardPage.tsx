@@ -24,6 +24,7 @@ import {
   EmployeeWorkUpdatesSection,
   EmployeeSupportSection,
   EmployeeFinanceVaultSection,
+  EmployeeDocumentsSection,
 } from '../../components/employee/EmployeePortalSections'
 
 export interface EmployeeDashboardPageProps {
@@ -556,6 +557,7 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
       </div>
 
       {/* Tab-Specific Portal Views */}
+      {activeTab === 'documents' && <EmployeeDocumentsSection />}
       {activeTab === 'leave' && <EmployeeLeaveSection />}
       {activeTab === 'work' && <EmployeeWorkUpdatesSection />}
       {activeTab === 'support' && <EmployeeSupportSection />}

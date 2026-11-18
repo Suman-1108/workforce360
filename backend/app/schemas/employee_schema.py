@@ -22,6 +22,15 @@ class EmployeeCreate(EmployeeBase):
     email: EmailStr = Field(..., examples=["alex.morgan@company.com"])
     phone: Optional[str] = Field(None, examples=["+91 90897 86754", "+1 (555) 123-4567"], max_length=35)
     password: Optional[str] = Field("WorkForce@2026", min_length=8)
+    shift_name: Optional[str] = Field(None, examples=["Standard Day Shift"])
+    street: Optional[str] = Field(None, examples=["123 Corporate Way"])
+    city: Optional[str] = Field(None, examples=["Chicago"])
+    state: Optional[str] = Field(None, examples=["IL"])
+    postal_code: Optional[str] = Field(None, examples=["60601"])
+    uniform_shirt: Optional[str] = Field(None, examples=["M"])
+    uniform_pants: Optional[str] = Field(None, examples=["32"])
+    uniform_shoes: Optional[str] = Field(None, examples=["9"])
+    blood_group: Optional[str] = Field(None, examples=["O+"])
 
 
 class EmployeeUpdate(BaseModel):

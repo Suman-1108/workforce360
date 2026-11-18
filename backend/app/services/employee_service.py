@@ -177,6 +177,25 @@ class EmployeeService:
             salary=data.salary,
             status=data.status.value if hasattr(data.status, "value") else str(data.status),
             emergency_contact=clean_emergency,
+            assigned_shift=getattr(data, "shift_name", None) or "Standard Day Shift",
+            address={
+                "street": getattr(data, "street", None) or "",
+                "city": getattr(data, "city", None) or "Headquarters",
+                "state": getattr(data, "state", None) or "",
+                "postalCode": getattr(data, "postal_code", None) or "",
+            },
+            uniform_sizes={
+                "shirt": getattr(data, "uniform_shirt", None) or "M",
+                "pants": getattr(data, "uniform_pants", None) or "32",
+                "shoes": getattr(data, "uniform_shoes", None) or "9",
+            },
+            blood_group=getattr(data, "blood_group", None) or "O+",
+            documents=[
+                {"name": "Government Photo ID Card (Passport / License)", "status": "Pending Upload", "required": True},
+                {"name": "Signed Employment Agreement & Code of Conduct", "status": "Pending Upload", "required": True},
+                {"name": "GPS Geofence & Facial Selfie Privacy Consent Form", "status": "Pending Upload", "required": True},
+                {"name": "Safety Equipment & Uniform Sizing Acknowledgement", "status": "Pending Upload", "required": True},
+            ],
         )
         self.emp_repo.create(db, employee)
 

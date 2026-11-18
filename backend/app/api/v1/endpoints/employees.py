@@ -154,11 +154,49 @@ def create_employee(
         joining_date=data.joining_date or date.today(),
         salary=data.salary,
         status=data.status,
-        emergency_contact=formatted_emergency
+        emergency_contact=formatted_emergency,
+        email=data.email,
+        first_name=data.first_name,
+        last_name=data.last_name,
+        full_name=f"{data.first_name} {data.last_name}".strip(),
+        phone=formatted_phone,
+        assigned_shift="Standard Day Shift",
+        address={
+            "street": getattr(data, "street", None) or "",
+            "city": getattr(data, "city", None) or "Headquarters",
+            "state": getattr(data, "state", None) or "",
+            "postalCode": getattr(data, "postal_code", None) or "",
+        },
+        uniform_sizes={
+            "shirt": getattr(data, "uniform_shirt", None) or "M",
+            "pants": getattr(data, "uniform_pants", None) or "32",
+            "shoes": getattr(data, "uniform_shoes", None) or "9",
+        },
+        blood_group=getattr(data, "blood_group", None) or "O+",
+        documents=[
+            {"name": "Government Photo ID Card (Passport / License)", "status": "Pending Upload", "required": True},
+            {"name": "Signed Employment Agreement & Code of Conduct", "status": "Pending Upload", "required": True},
+            {"name": "GPS Geofence & Facial Selfie Privacy Consent Form", "status": "Pending Upload", "required": True},
+            {"name": "Safety Equipment & Uniform Sizing Acknowledgement", "status": "Pending Upload", "required": True},
+        ],
     )
     db.add(new_emp)
     db.commit()
     db.refresh(new_emp)
+
+    from app.services.email import send_employee_welcome_email
+    try:
+        tenant_name = new_emp.tenant.name if new_emp.tenant else "WorkForce 360"
+        send_employee_welcome_email(
+            to_email=data.email,
+            employee_name=f"{new_user.first_name} {new_user.last_name}".strip(),
+            organization_name=tenant_name,
+            employee_id_number=new_emp.employee_id_number,
+            designation=new_emp.designation,
+            password=data.password or "WorkForce@2026",
+        )
+    except Exception as e:
+        pass
 
     return {
         "id": new_emp.id,

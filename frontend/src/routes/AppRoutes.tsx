@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom'
 import { HomePage } from '../pages/Home/HomePage'
 import { LoginPage, ForgotPasswordPage, ResetPasswordPage, type PortalType } from '../pages/Auth'
@@ -75,6 +75,15 @@ export const AppRoutes: React.FC = () => {
   })
   const [employeeTab, setEmployeeTab] = useState('home')
 
+  // Auto-switch employee portal tab from URL query param (e.g. /employee?tab=documents)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get('tab')
+    if (tab) {
+      setEmployeeTab(tab)
+    }
+  }, [location.search])
+
   // Synchronize active sidebar route dynamically from current location pathname
   const pathAfterOwner = location.pathname.replace('/owner/', '').replace('/owner', '')
   const currentRoute = pathAfterOwner.split('/')[0] || 'dashboard'
@@ -91,6 +100,12 @@ export const AppRoutes: React.FC = () => {
   }
 
   const handleLoginSuccess = (portal: PortalType) => {
+    const params = new URLSearchParams(location.search)
+    const redirectUrl = params.get('redirect')
+    if (redirectUrl) {
+      navigate(redirectUrl)
+      return
+    }
     if (portal === 'owner') {
       navigate('/owner/dashboard')
     } else if (portal === 'employee') {

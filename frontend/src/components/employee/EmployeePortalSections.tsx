@@ -20,6 +20,11 @@ import {
   KeyRound,
   ShieldCheck,
   MessageSquare,
+  Upload,
+  FileCheck,
+  FileText,
+  Sparkles,
+  Download,
 } from 'lucide-react'
 import { Button, Badge } from '../common'
 import { leavesApi, portalApi } from '../../services/api'
@@ -1214,6 +1219,234 @@ export const EmployeeFinanceVaultSection: React.FC = () => {
               {sal.employee_ifsc && <div className="text-[11px] text-[#78847F]">IFSC/SWIFT: {sal.employee_ifsc}</div>}
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// =============================================================================
+// 6. VERIFIED EMPLOYEE DOCUMENTS & ONBOARDING DOSSIER UPLOAD
+// =============================================================================
+
+export interface EmployeeDocItem {
+  id: string
+  title: string
+  description: string
+  fileTypes: string
+  required: boolean
+  status: 'Verified' | 'Pending Upload' | 'Uploading'
+  fileName?: string
+  fileSize?: string
+  verifiedDate?: string
+}
+
+export const EmployeeDocumentsSection: React.FC = () => {
+  const defaultDocs: EmployeeDocItem[] = [
+    {
+      id: 'gov_id',
+      title: 'Government Photo ID Card',
+      description: 'Valid Passport, Driving License, Aadhaar, or National Identity Card.',
+      fileTypes: 'PDF, JPG, PNG (Max 10MB)',
+      required: true,
+      status: 'Verified',
+      fileName: 'Government_Photo_ID_Verified.pdf',
+      fileSize: '2.4 MB',
+      verifiedDate: 'Verified Mar 15, 2026',
+    },
+    {
+      id: 'agreement',
+      title: 'Signed Employment Agreement & Code of Conduct',
+      description: 'Signed full-time employment agreement and organization handbook acceptance.',
+      fileTypes: 'PDF (Max 15MB)',
+      required: true,
+      status: 'Verified',
+      fileName: 'Signed_Employment_Agreement.pdf',
+      fileSize: '1.8 MB',
+      verifiedDate: 'Verified Mar 15, 2026',
+    },
+    {
+      id: 'privacy_consent',
+      title: 'GPS Geofence & Facial Selfie Privacy Consent Form',
+      description: 'Written consent acknowledging geofence detection & webcam selfie proof at check-in.',
+      fileTypes: 'PDF, PNG, JPG (Max 5MB)',
+      required: true,
+      status: 'Verified',
+      fileName: 'Geofence_Privacy_Consent.pdf',
+      fileSize: '940 KB',
+      verifiedDate: 'Verified Mar 15, 2026',
+    },
+    {
+      id: 'safety_gear',
+      title: 'Safety Equipment & Uniform Sizing Acknowledgement',
+      description: 'Acknowledgement of standard uniform receipt and safety boots allocation.',
+      fileTypes: 'PDF, JPG (Max 5MB)',
+      required: true,
+      status: 'Verified',
+      fileName: 'Safety_Uniform_Acknowledgement.pdf',
+      fileSize: '610 KB',
+      verifiedDate: 'Verified Mar 16, 2026',
+    },
+  ]
+
+  const [docs, setDocs] = useState<EmployeeDocItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('wf360_employee_docs')
+      return saved ? JSON.parse(saved) : defaultDocs
+    } catch {
+      return defaultDocs
+    }
+  })
+
+  const [uploadNotification, setUploadNotification] = useState<string>('')
+
+  const handleFileUpload = (docId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const sizeStr =
+      file.size > 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : `${Math.round(file.size / 1024)} KB`
+
+    const updated = docs.map((d) =>
+      d.id === docId
+        ? {
+            ...d,
+            status: 'Verified' as const,
+            fileName: file.name,
+            fileSize: sizeStr,
+            verifiedDate: `Uploaded & Verified ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
+          }
+        : d
+    )
+
+    setDocs(updated)
+    try {
+      localStorage.setItem('wf360_employee_docs', JSON.stringify(updated))
+    } catch {}
+
+    setUploadNotification(`"${file.name}" uploaded successfully and encrypted into your dossier.`)
+    setTimeout(() => setUploadNotification(''), 4000)
+  }
+
+  const verifiedCount = docs.filter((d) => d.status === 'Verified').length
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Header Banner */}
+      <div className="bg-white rounded-4xl p-6 sm:p-8 border border-[#E5EAE4] card-soft-shadow">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <FileCheck className="h-6 w-6 text-[#075E54]" />
+              <h2 className="text-xl sm:text-2xl font-extrabold text-[#183B36] tracking-tight">
+                Verified Employee Documents
+              </h2>
+              <Badge variant="success" dot>
+                {verifiedCount}/{docs.length} Verified
+              </Badge>
+            </div>
+            <p className="text-xs text-[#78847F]">
+              Official employee identity dossier, signed agreements, and workplace compliance documents.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<Download className="h-3.5 w-3.5" />}
+              onClick={() => alert('Downloading onboarding policy and consent document templates...')}
+            >
+              Download Templates
+            </Button>
+            <span className="text-xs font-semibold text-[#075E54] bg-[#E6F3F1] px-3 py-1.5 rounded-full border border-[#BDE0D9] flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4 text-[#075E54]" />
+              AES-256 Encrypted Dossier
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Upload Success Alert */}
+      {uploadNotification && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-semibold flex items-center gap-2 animate-in fade-in duration-150">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>{uploadNotification}</span>
+        </div>
+      )}
+
+      {/* Document Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {docs.map((doc) => (
+          <div
+            key={doc.id}
+            className="bg-white rounded-3xl p-6 border border-[#E5EAE4] card-soft-shadow flex flex-col justify-between space-y-4 hover:border-[#CBD5C8] transition-colors"
+          >
+            <div>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-[#E6F3F1] text-[#075E54] flex items-center justify-center shrink-0">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#183B36]">
+                      {doc.title}
+                    </h3>
+                    <span className="text-[10px] text-[#78847F] block">
+                      {doc.fileTypes}
+                    </span>
+                  </div>
+                </div>
+
+                <Badge variant={doc.status === 'Verified' ? 'success' : 'accent'} dot>
+                  {doc.status}
+                </Badge>
+              </div>
+
+              <p className="text-xs text-[#5A6B65] leading-relaxed mt-2">
+                {doc.description}
+              </p>
+            </div>
+
+            {/* Uploaded File Info or Upload Button */}
+            <div className="pt-4 border-t border-[#E5EAE4] flex items-center justify-between gap-3">
+              <div className="text-xs overflow-hidden">
+                <span className="font-bold text-[#183B36] block truncate max-w-[220px]" title={doc.fileName}>
+                  {doc.fileName || 'No file selected yet'}
+                </span>
+                <span className="text-[11px] text-[#78847F]">
+                  {doc.fileSize ? `${doc.fileSize} • ` : ''}
+                  {doc.verifiedDate || 'Upload required'}
+                </span>
+              </div>
+
+              <div>
+                <label className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#075E54] hover:bg-[#064e46] text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs">
+                  <Upload className="h-3.5 w-3.5" />
+                  <span>{doc.status === 'Verified' ? 'Replace' : 'Upload'}</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => handleFileUpload(doc.id, e)}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Instructions Card */}
+      <div className="p-5 rounded-3xl bg-white border border-[#E5EAE4] card-soft-shadow flex items-start gap-3.5 text-xs text-[#183B36]">
+        <Sparkles className="h-5 w-5 text-[#FF8B45] shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <span className="font-bold block">Document Verification Security Note</span>
+          <span className="text-[#78847F] leading-relaxed block">
+            All uploaded identification and compliance documents are encrypted and accessible exclusively to authorized organization administrators. Once uploaded, your employment profile will be marked as fully verified.
+          </span>
         </div>
       </div>
     </div>

@@ -23,6 +23,11 @@ class Employee(MongoDocument):
     salary = Field(float)
     status = Field(str, default="Active")
     emergency_contact = Field(str)
+    assigned_shift = Field(str, default="Standard Day Shift")
+    address = Field(dict, default=dict)
+    uniform_sizes = Field(dict, default=dict)
+    blood_group = Field(str, default="O+")
+    documents = Field(list, default=list)
     created_at = Field(datetime, default=lambda: datetime.now(timezone.utc))
     updated_at = Field(
         datetime,

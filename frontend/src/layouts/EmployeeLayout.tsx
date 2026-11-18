@@ -6,6 +6,7 @@ import {
   ClipboardList,
   LifeBuoy,
   Wallet,
+  FileCheck,
   LogOut,
 } from 'lucide-react'
 import { Avatar } from '../components/common/Avatar'
@@ -46,6 +47,7 @@ export const EmployeeLayout: React.FC<EmployeeLayoutProps> = ({
 
   const tabs = [
     { id: 'home', label: 'Today & Breaks', shortLabel: 'Today', icon: <LayoutDashboard className="h-4 w-4" /> },
+    { id: 'documents', label: 'Verified Documents', shortLabel: 'Documents', icon: <FileCheck className="h-4 w-4" /> },
     { id: 'leave', label: 'Apply Leave', shortLabel: 'Leave', icon: <Coffee className="h-4 w-4" /> },
     { id: 'work', label: 'Work Updates', shortLabel: 'Work', icon: <ClipboardList className="h-4 w-4" /> },
     { id: 'support', label: 'Support', shortLabel: 'Support', icon: <LifeBuoy className="h-4 w-4" /> },
