@@ -12,7 +12,6 @@ import {
   RotateCcw,
   RefreshCw,
   ShieldCheck,
-  Upload,
   SwitchCamera,
 } from 'lucide-react'
 import { Button, Badge, Modal } from '../../components/common'
@@ -62,7 +61,6 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
   // Camera stream refs & state
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const [cameraStatus, setCameraStatus] = useState<'idle' | 'starting' | 'active' | 'captured' | 'error'>('idle')
   const [cameraError, setCameraError] = useState<string | null>(null)
@@ -111,7 +109,7 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
     if (!window.isSecureContext) {
       setCameraStatus('error')
       setCameraError(
-        'Live camera streaming requires HTTPS or http://localhost. Use the "Take / Upload Photo" button below to capture from any device.'
+        'Live camera streaming requires HTTPS or http://localhost. Please open the app over a secure connection.'
       )
       return
     }
@@ -119,7 +117,7 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setCameraStatus('error')
       setCameraError(
-        'Live camera streaming is not supported in this browser. Use "Take / Upload Photo" below to capture a selfie.'
+        'Live camera streaming is not supported in this browser. Please use a modern browser with webcam access.'
       )
       return
     }
@@ -190,13 +188,13 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
     } catch (err: any) {
       console.warn('Camera stream error:', err)
       setCameraStatus('error')
-      let msg = 'Could not access webcam. You can retry or use "Take / Upload Photo" below.'
+      let msg = 'Could not access webcam. Please check camera permissions and retry.'
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        msg = 'Camera permission was blocked by the browser or OS. Allow camera access in your browser bar or use "Take / Upload Photo" below.'
+        msg = 'Camera permission was blocked by the browser or OS. Please allow camera access in your browser address bar and retry.'
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        msg = 'No webcam detected on this device. Use "Take / Upload Photo" below to submit a selfie.'
+        msg = 'No webcam detected on this device. Please connect a camera and retry.'
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-        msg = 'Camera is currently in use by another app. Close other video apps and retry, or upload a photo.'
+        msg = 'Camera is currently in use by another app. Close other video apps and retry.'
       }
       setCameraError(msg)
     }
@@ -208,43 +206,6 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
     setFacingMode(nextMode)
     setSelectedDeviceId('')
     startCamera(undefined, nextMode)
-  }
-
-  // Universal fallback: Native device camera / photo upload (works on ALL systems & OSes)
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = () => {
-      const img = new Image()
-      img.onload = () => {
-        const canvas = canvasRef.current
-        if (canvas) {
-          const maxDim = 640
-          const scale = Math.min(1, maxDim / Math.max(img.width, img.height))
-          canvas.width = Math.round(img.width * scale)
-          canvas.height = Math.round(img.height * scale)
-          const ctx = canvas.getContext('2d')
-          if (ctx) {
-            ctx.setTransform(1, 0, 0, 1, 0, 0)
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-            const compressed = canvas.toDataURL('image/jpeg', 0.8)
-            stopCamera()
-            setCapturedPhoto(compressed)
-            setCameraStatus('captured')
-            return
-          }
-        }
-        stopCamera()
-        setCapturedPhoto(reader.result as string)
-        setCameraStatus('captured')
-      }
-      img.src = reader.result as string
-    }
-    reader.readAsDataURL(file)
-    // Reset input so user can re-select same file if needed
-    e.target.value = ''
   }
 
   // Snap photo to canvas
@@ -790,7 +751,7 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
                   </div>
                 </>
               ) : (
-                // Camera Error or Blocked State — universal fallback for all systems
+                // Camera Error or Blocked State
                 <div className="p-5 text-center space-y-3">
                   <div className="h-11 w-11 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
                     <Camera className="h-5 w-5" />
@@ -808,64 +769,34 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
                     >
                       Retry Camera
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={() => fileInputRef.current?.click()}
-                      leftIcon={<Upload className="h-3.5 w-3.5" />}
-                      className="text-xs"
-                    >
-                      Take / Upload Photo
-                    </Button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Universal Hidden File/Native Camera Input (works on Windows, Mac, Linux, Android & iOS) */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              capture="user"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-
-            {/* Camera Device Switcher & Universal Photo Upload Row */}
-            {!capturedPhoto && (
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                {videoDevices.length > 1 ? (
-                  <select
-                    id="camera-select"
-                    aria-label="Select camera device"
-                    value={selectedDeviceId}
-                    onChange={(e) => {
-                      const id = e.target.value
-                      setSelectedDeviceId(id)
-                      startCamera(id)
-                    }}
-                    className="flex-1 min-w-36 rounded-xl border border-[#CBD5C8] bg-white px-2.5 py-1.5 text-xs text-[#183B36] focus:outline-none focus:ring-2 focus:ring-[#075E54]/30"
-                  >
-                    {videoDevices.map((dev, idx) => (
-                      <option key={dev.deviceId} value={dev.deviceId}>
-                        {dev.label || `Camera ${idx + 1}`}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <span className="text-[11px] text-[#78847F]">
-                    Camera blocked or unavailable on this system?
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#075E54] hover:text-[#183B36] bg-[#E6F3F1] hover:bg-[#D5EBE7] px-3 py-1.5 rounded-xl transition cursor-pointer"
+            {/* Camera Device Switcher (if multiple cameras detected) */}
+            {!capturedPhoto && videoDevices.length > 1 && (
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <label htmlFor="camera-select" className="text-[#78847F] font-medium shrink-0">
+                  Camera:
+                </label>
+                <select
+                  id="camera-select"
+                  aria-label="Select camera device"
+                  value={selectedDeviceId}
+                  onChange={(e) => {
+                    const id = e.target.value
+                    setSelectedDeviceId(id)
+                    startCamera(id)
+                  }}
+                  className="flex-1 rounded-xl border border-[#CBD5C8] bg-white px-2.5 py-1.5 text-xs text-[#183B36] focus:outline-none focus:ring-2 focus:ring-[#075E54]/30"
                 >
-                  <Upload className="h-3.5 w-3.5" />
-                  <span>Take / Upload Photo</span>
-                </button>
+                  {videoDevices.map((dev, idx) => (
+                    <option key={dev.deviceId} value={dev.deviceId}>
+                      {dev.label || `Camera ${idx + 1}`}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 
