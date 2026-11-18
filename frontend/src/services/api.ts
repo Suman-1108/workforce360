@@ -2,6 +2,9 @@ import axios from 'axios';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
 
+const unwrap = (res: any) =>
+  res?.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res?.data;
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -110,34 +113,34 @@ export const authApi = {
 export const employeesApi = {
   validatePhone: async (phone: string, country: string = 'IN') => {
     const res = await api.get('/employees/validate-phone', { params: { phone, country } });
-    return res.data;
+    return unwrap(res);
   },
   list: async (params?: { department_id?: number; status?: string; search?: string }) => {
     const res = await api.get('/employees', { params });
-    return res.data;
+    return unwrap(res);
   },
   getById: async (id: number) => {
     const res = await api.get(`/employees/${id}`);
-    return res.data;
+    return unwrap(res);
   },
   create: async (data: any) => {
     const res = await api.post('/employees', data);
-    return res.data;
+    return unwrap(res);
   },
   update: async (id: number, data: any) => {
     const res = await api.put(`/employees/${id}`, data);
-    return res.data;
+    return unwrap(res);
   },
 };
 
 export const attendanceApi = {
   list: async (params?: { date?: string; employee_id?: number; status?: string }) => {
     const res = await api.get('/attendance', { params });
-    return res.data;
+    return unwrap(res);
   },
   getTodayPunchStatus: async () => {
     const res = await api.get('/attendance/today');
-    return res.data?.data || res.data;
+    return unwrap(res);
   },
   punchIn: async (data: {
     latitude: number;
@@ -148,7 +151,7 @@ export const attendanceApi = {
     notes?: string;
   }) => {
     const res = await api.post('/attendance/punch-in', data);
-    return res.data;
+    return unwrap(res);
   },
   punchOut: async (data: {
     latitude: number;
@@ -158,83 +161,83 @@ export const attendanceApi = {
     notes?: string;
   }) => {
     const res = await api.post('/attendance/punch-out', data);
-    return res.data;
+    return unwrap(res);
   },
   resetTodayPunch: async () => {
     const res = await api.post('/attendance/reset-today');
-    return res.data;
+    return unwrap(res);
   },
 };
 
 export const shiftsApi = {
   list: async () => {
     const res = await api.get('/shifts');
-    return res.data;
+    return unwrap(res);
   },
   create: async (data: any) => {
     const res = await api.post('/shifts', data);
-    return res.data;
+    return unwrap(res);
   },
 };
 
 export const departmentsApi = {
   list: async () => {
     const res = await api.get('/departments');
-    return res.data;
+    return unwrap(res);
   },
   create: async (data: any) => {
     const res = await api.post('/departments', data);
-    return res.data;
+    return unwrap(res);
   },
 };
 
 export const leavesApi = {
   getTypes: async () => {
     const res = await api.get('/leaves/types');
-    return res.data;
+    return unwrap(res);
   },
   list: async (params?: { status?: string }) => {
     const res = await api.get('/leaves', { params });
-    return res.data;
+    return unwrap(res);
   },
   apply: async (data: { leave_type_id: number; start_date: string; end_date: string; reason: string }) => {
     const res = await api.post('/leaves', data);
-    return res.data;
+    return unwrap(res);
   },
   action: async (id: number, action: 'Approved' | 'Rejected', rejection_reason?: string) => {
     const res = await api.post(`/leaves/${id}/action`, { action, rejection_reason });
-    return res.data;
+    return unwrap(res);
   },
 };
 
 export const uniformsApi = {
   listItems: async (params?: { category?: string; search?: string }) => {
     const res = await api.get('/uniforms/items', { params });
-    return res.data;
+    return unwrap(res);
   },
   getItem: async (id: number | string) => {
     const res = await api.get(`/uniforms/items/${id}`);
-    return res.data;
+    return unwrap(res);
   },
   addItem: async (data: any) => {
     const res = await api.post('/uniforms/items', data);
-    return res.data;
+    return unwrap(res);
   },
   updateItem: async (id: number | string, data: any) => {
     const res = await api.put(`/uniforms/items/${id}`, data);
-    return res.data;
+    return unwrap(res);
   },
   deleteItem: async (id: number | string) => {
     const res = await api.delete(`/uniforms/items/${id}`);
-    return res.data;
+    return unwrap(res);
   },
   listDistributions: async (params?: { employee_id?: number; uniform_item_id?: number; status?: string }) => {
     const res = await api.get('/uniforms/distributions', { params });
-    return res.data;
+    return unwrap(res);
   },
   issue: async (data: { employee_id: number; uniform_item_id: number; size: string; quantity: number; notes?: string }) => {
     const res = await api.post('/uniforms/issue', data);
-    return res.data;
+    return unwrap(res);
   },
   bulkIssue: async (data: {
     uniform_item_id: number;
@@ -247,57 +250,57 @@ export const uniformsApi = {
     notes?: string;
   }) => {
     const res = await api.post('/uniforms/bulk-issue', data);
-    return res.data;
+    return unwrap(res);
   },
   actionDistribution: async (distId: number, status: 'Returned' | 'Damaged' | 'Lost', notes?: string) => {
     const res = await api.post(`/uniforms/distributions/${distId}/action`, { status, notes });
-    return res.data;
+    return unwrap(res);
   },
   getMyUniforms: async () => {
     const res = await api.get('/uniforms/my-uniforms');
-    return res.data;
+    return unwrap(res);
   },
 };
 
 export const reportsApi = {
   getSummary: async () => {
     const res = await api.get('/reports/summary');
-    return res.data;
+    return unwrap(res);
   },
   getWeeklyAttendance: async () => {
     const res = await api.get('/reports/weekly-attendance');
-    return res.data;
+    return unwrap(res);
   },
   getDailyTrends: async () => {
     const res = await api.get('/reports/daily-trends');
-    return res.data;
+    return unwrap(res);
   },
   getDepartmentDistribution: async () => {
     const res = await api.get('/reports/department-distribution');
-    return res.data;
+    return unwrap(res);
   },
   getShiftDistribution: async () => {
     const res = await api.get('/reports/shift-distribution');
-    return res.data;
+    return unwrap(res);
   },
   getRecentActivity: async () => {
     const res = await api.get('/reports/recent-activity');
-    return res.data;
+    return unwrap(res);
   },
 };
 
 export const subscriptionsApi = {
   getPlans: async () => {
     const res = await api.get('/subscriptions/plans');
-    return res.data;
+    return unwrap(res);
   },
   getCurrent: async () => {
     const res = await api.get('/subscriptions/current');
-    return res.data;
+    return unwrap(res);
   },
   createCheckout: async (data: { plan_code: string; billing_cycle?: string }) => {
     const res = await api.post('/subscriptions/checkout', data);
-    return res.data;
+    return unwrap(res);
   },
   verifyRazorpay: async (data: {
     razorpay_order_id: string;
@@ -307,15 +310,15 @@ export const subscriptionsApi = {
     billing_cycle?: string;
   }) => {
     const res = await api.post('/subscriptions/razorpay/verify', data);
-    return res.data;
+    return unwrap(res);
   },
   getHistory: async () => {
     const res = await api.get('/subscriptions/history');
-    return res.data;
+    return unwrap(res);
   },
   cancel: async () => {
     const res = await api.post('/subscriptions/cancel');
-    return res.data;
+    return unwrap(res);
   },
 };
 

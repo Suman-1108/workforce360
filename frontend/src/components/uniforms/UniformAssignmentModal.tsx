@@ -76,7 +76,10 @@ export const UniformAssignmentModal: React.FC<UniformAssignmentModalProps> = ({
             setSelectedDeptId(depts[0].id)
           }
 
-          const brs = branchRes?.items || (Array.isArray(branchRes) ? branchRes : [])
+          const brs =
+            branchRes?.data?.items ||
+            branchRes?.items ||
+            (Array.isArray(branchRes?.data) ? branchRes.data : Array.isArray(branchRes) ? branchRes : [])
           setBranches(brs)
           if (brs.length > 0 && !selectedBranchId) {
             setSelectedBranchId(brs[0].id)

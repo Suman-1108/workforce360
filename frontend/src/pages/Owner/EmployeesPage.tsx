@@ -36,15 +36,19 @@ export const EmployeesPage: React.FC<EmployeesPageProps> = ({
     employeesApi
       .list()
       .then((res) => {
-        const items = res?.items || (Array.isArray(res) ? res : [])
+        const items = res?.items || res?.data?.items || (Array.isArray(res) ? res : [])
         const mapped: Employee[] = items.map((it: any) => ({
           id: String(it.id),
-          employeeId: it.employee_id_number,
-          fullName: it.name,
-          email: it.email,
+          employeeId: it.employee_id_number || `EMP-${it.id}`,
+          fullName:
+            it.full_name ||
+            it.name ||
+            `${it.first_name || ''} ${it.last_name || ''}`.trim() ||
+            'Unknown Employee',
+          email: it.email || '',
           phone: it.phone || '+1 (555) 000-0000',
           department: it.department_name || 'General Operations',
-          designation: it.designation,
+          designation: it.designation || 'Team Member',
           branch: it.branch_name || 'Apex HQ Campus',
           joiningDate: it.joining_date || '2026-01-01',
           employmentType: it.employment_type || 'Full-time',
@@ -56,7 +60,7 @@ export const EmployeesPage: React.FC<EmployeesPageProps> = ({
           emergencyContact: {
             name: 'Emergency Contact',
             relationship: 'Family',
-            phone: '+1 (555) 999-0000',
+            phone: it.emergency_contact || '+1 (555) 999-0000',
           },
         }))
         setEmployees(mapped)
