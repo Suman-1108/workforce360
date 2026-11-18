@@ -107,8 +107,17 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
       }, 1200)
     } catch (err: any) {
       setIsLoading(false)
-      const detail = err.response?.data?.detail || 'Failed to enroll employee. Please verify details.'
-      setErrorMessage(detail)
+      const data = err.response?.data
+      const fieldErrors = data?.details?.fields
+        ? Object.entries(data.details.fields)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join(', ')
+        : ''
+      const msg =
+        data?.message ||
+        data?.detail ||
+        'Failed to enroll employee. Please verify details.'
+      setErrorMessage(fieldErrors ? `${msg} (${fieldErrors})` : msg)
     }
   }
 
