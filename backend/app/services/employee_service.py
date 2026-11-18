@@ -1,10 +1,13 @@
+import secrets
 from typing import Optional, List, Tuple
 from app.database.session import Session
 from app.models.employee import Employee
+from app.models.tenant import Tenant
 from app.models.user import User
 from app.repositories.employee_repository import employee_repository, EmployeeRepository
 from app.repositories.user_repository import user_repository, UserRepository
 from app.services.entitlement_service import entitlement_service, EntitlementService
+from app.services.email import send_employee_welcome_email
 from app.schemas.employee_schema import (
     EmployeeCreate,
     EmployeeUpdate,
@@ -128,10 +131,15 @@ class EmployeeService:
                 f"Employee ID '{data.employee_id_number}' is already assigned in your organization."
             )
 
-        # 4. Create User entity
-        password = data.password or "WorkForce@2026"
+        # 4. Resolve Organization Name & Generate Password
+        tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
+        organization_name = tenant.name if tenant else "WorkForce 360 Organization"
+        password = data.password or f"WF360@{secrets.token_hex(3).upper()}"
         clean_phone = format_e164_or_international(data.phone) if data.phone else None
         clean_emergency = format_e164_or_international(data.emergency_contact) if data.emergency_contact else None
+        full_name = f"{data.first_name} {data.last_name}".strip()
+
+        # 5. Create User entity
         user = User(
             tenant_id=tenant_id,
             email=data.email,
@@ -145,11 +153,17 @@ class EmployeeService:
         )
         self.usr_repo.create(db, user)
 
-        # 5. Create Employee profile
+        # 6. Create Employee profile (storing email, full_name, phone & organization_name directly in MongoDB)
         employee = Employee(
             tenant_id=tenant_id,
             user_id=user.id,
             employee_id_number=data.employee_id_number,
+            email=data.email,
+            first_name=data.first_name,
+            last_name=data.last_name,
+            full_name=full_name,
+            phone=clean_phone,
+            organization_name=organization_name,
             department_id=data.department_id,
             branch_id=data.branch_id,
             designation=data.designation,
@@ -163,7 +177,21 @@ class EmployeeService:
 
         db.commit()
         db.refresh(employee)
-        logger.info(f"Enrolled employee {employee.employee_id_number} (Tenant: {tenant_id})")
+        logger.info(f"Enrolled employee {employee.employee_id_number} ({data.email}) in {organization_name}")
+
+        # 7. Send welcome email with organization name, login email & password
+        try:
+            send_employee_welcome_email(
+                to_email=data.email,
+                employee_name=full_name,
+                organization_name=organization_name,
+                employee_id_number=employee.employee_id_number,
+                designation=employee.designation,
+                password=password,
+            )
+        except Exception as mail_err:
+            logger.error(f"Failed to send welcome credentials email to {data.email}: {mail_err}")
+
         return self._to_response(employee)
 
     def update_employee(
@@ -174,15 +202,21 @@ class EmployeeService:
         if not emp:
             raise NotFoundException("Employee", employee_id)
 
-        # Update User fields if provided
+        # Update User fields and mirrored Employee fields if provided
         u = emp.user
         if u:
             if data.first_name is not None:
                 u.first_name = data.first_name
+                emp.first_name = data.first_name
             if data.last_name is not None:
                 u.last_name = data.last_name
+                emp.last_name = data.last_name
+            if data.first_name is not None or data.last_name is not None:
+                emp.full_name = f"{u.first_name} {u.last_name}".strip()
             if data.phone is not None:
-                u.phone = format_e164_or_international(data.phone) if data.phone else None
+                formatted_phone = format_e164_or_international(data.phone) if data.phone else None
+                u.phone = formatted_phone
+                emp.phone = formatted_phone
 
         # Update Employee fields
         if data.designation is not None:

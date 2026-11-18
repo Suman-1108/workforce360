@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   ArrowLeft,
   UserPlus,
@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Building,
+  Lock,
 } from 'lucide-react'
 import { Button, Input, Select, PhoneInput } from '../../components/common'
 import type { Employee, EmploymentType } from '../../types/employee'
@@ -23,9 +24,26 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
   onEmployeeCreated,
 }) => {
   const [activeTab, setActiveTab] = useState<'personal' | 'employment' | 'contact'>('personal')
+  const [completedSteps, setCompletedSteps] = useState<{ personal: boolean; employment: boolean }>({
+    personal: false,
+    employment: false,
+  })
+  const [orgName, setOrgName] = useState('Apex Global Technologies')
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('wf360_user')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed?.tenant?.name) setOrgName(parsed.tenant.name)
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
 
   // Form State
   const [formData, setFormData] = useState({
@@ -53,25 +71,69 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
     emergencyPhone: '',
   })
 
+  const validatePersonalStep = (): boolean => {
+    setErrorMessage('')
+    if (!formData.fullName.trim()) {
+      setErrorMessage('Please enter the employee Full Name to continue.')
+      return false
+    }
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setErrorMessage('Please enter a valid Work Email address to continue.')
+      return false
+    }
+    if (!formData.phone || formData.phone.replace(/\D/g, '').length < 7) {
+      setErrorMessage('Please enter a valid Mobile Number to continue.')
+      return false
+    }
+    return true
+  }
+
+  const validateEmploymentStep = (): boolean => {
+    setErrorMessage('')
+    if (!formData.employeeId.trim()) {
+      setErrorMessage('Please specify an Employee ID to continue.')
+      return false
+    }
+    if (!formData.designation.trim()) {
+      setErrorMessage('Please enter the Designation / Job Role to continue.')
+      return false
+    }
+    if (!formData.joiningDate) {
+      setErrorMessage('Please select a Joining Date to continue.')
+      return false
+    }
+    return true
+  }
+
+  const handleNextStep = () => {
+    if (activeTab === 'personal') {
+      if (!validatePersonalStep()) return
+      setCompletedSteps((prev) => ({ ...prev, personal: true }))
+      setActiveTab('employment')
+    } else if (activeTab === 'employment') {
+      if (!validateEmploymentStep()) return
+      setCompletedSteps((prev) => ({ ...prev, employment: true }))
+      setActiveTab('contact')
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorMessage('')
     setSuccessMessage('')
 
-    if (!formData.fullName || !formData.email || !formData.phone) {
+    if (!validatePersonalStep()) {
       setActiveTab('personal')
-      setErrorMessage('Please complete all mandatory personal information fields.')
       return
     }
 
-    if (!formData.employeeId || !formData.designation) {
+    if (!validateEmploymentStep()) {
       setActiveTab('employment')
-      setErrorMessage('Please specify Employee ID and Designation.')
       return
     }
 
     setIsLoading(true)
-    const names = formData.fullName.trim().split(' ')
+    const names = formData.fullName.trim().split(/\s+/)
     const firstName = names[0] || 'Employee'
     const lastName = names.slice(1).join(' ') || 'Member'
 
@@ -79,21 +141,23 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
       await employeesApi.create({
         first_name: firstName,
         last_name: lastName,
-        email: formData.email,
+        email: formData.email.trim(),
         phone: formData.phone || undefined,
-        employee_id_number: formData.employeeId,
-        designation: formData.designation,
+        employee_id_number: formData.employeeId.trim(),
+        designation: formData.designation.trim(),
         employment_type: formData.employmentType,
         joining_date: formData.joiningDate,
-        emergency_contact: formData.emergencyPhone,
+        emergency_contact: formData.emergencyPhone?.trim() || undefined,
         department_id: 1,
         branch_id: 1,
       })
       setIsLoading(false)
-      setSuccessMessage(`Employee ${formData.fullName} (${formData.employeeId}) successfully enrolled!`)
+      setSuccessMessage(
+        `Employee ${formData.fullName} (${formData.employeeId}) enrolled! Login email & password sent to ${formData.email.trim()}.`
+      )
       onEmployeeCreated?.({
         fullName: formData.fullName,
-        email: formData.email,
+        email: formData.email.trim(),
         phone: formData.phone,
         employeeId: formData.employeeId,
         department: formData.department,
@@ -104,7 +168,7 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
       })
       setTimeout(() => {
         onBack()
-      }, 1200)
+      }, 1800)
     } catch (err: any) {
       setIsLoading(false)
       const data = err.response?.data
@@ -136,7 +200,7 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
 
         <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#E6F3F1] text-[#075E54] border border-[#BDE0D9] flex items-center gap-1.5">
           <Building className="h-3.5 w-3.5" />
-          Tenant: Acme Logistics Global
+          Tenant: {orgName}
         </span>
       </div>
 
@@ -167,55 +231,67 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
 
       {/* Form Container */}
       <div className="bg-white rounded-4xl border border-[#E5EAE4] card-soft-shadow overflow-hidden">
-        {/* Step Navigation Tabs */}
+        {/* Guided Step Progress Header (no manual skipping ahead) */}
         <div className="flex border-b border-[#E5EAE4] bg-[#FBFDFB]">
-          <button
-            type="button"
-            onClick={() => setActiveTab('personal')}
+          <div
             className={`
-              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2 cursor-pointer
+              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2 select-none
               ${
                 activeTab === 'personal'
                   ? 'border-[#075E54] text-[#075E54] bg-white'
-                  : 'border-transparent text-[#78847F] hover:text-[#183B36]'
+                  : completedSteps.personal
+                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50/40'
+                  : 'border-transparent text-[#78847F]'
               }
             `}
           >
-            <User className="h-4 w-4" />
+            {completedSteps.personal && activeTab !== 'personal' ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            ) : (
+              <User className="h-4 w-4" />
+            )}
             <span>1. Personal Information</span>
-          </button>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('employment')}
+          <div
             className={`
-              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2 cursor-pointer
+              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2 select-none
               ${
                 activeTab === 'employment'
                   ? 'border-[#075E54] text-[#075E54] bg-white'
-                  : 'border-transparent text-[#78847F] hover:text-[#183B36]'
+                  : completedSteps.employment
+                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50/40'
+                  : 'border-transparent text-[#A0ABA6]'
               }
             `}
           >
-            <Briefcase className="h-4 w-4" />
+            {completedSteps.employment && activeTab !== 'employment' ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            ) : !completedSteps.personal && activeTab !== 'employment' ? (
+              <Lock className="h-3.5 w-3.5" />
+            ) : (
+              <Briefcase className="h-4 w-4" />
+            )}
             <span>2. Employment Details</span>
-          </button>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('contact')}
+          <div
             className={`
-              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2 cursor-pointer
+              flex-1 py-4 px-4 text-xs font-bold transition-all border-b-2 flex items-center justify-center gap-2 select-none
               ${
                 activeTab === 'contact'
                   ? 'border-[#075E54] text-[#075E54] bg-white'
-                  : 'border-transparent text-[#78847F] hover:text-[#183B36]'
+                  : 'border-transparent text-[#A0ABA6]'
               }
             `}
           >
-            <PhoneCall className="h-4 w-4" />
-            <span>3. Contact & Emergency</span>
-          </button>
+            {!completedSteps.employment && activeTab !== 'contact' ? (
+              <Lock className="h-3.5 w-3.5" />
+            ) : (
+              <PhoneCall className="h-4 w-4" />
+            )}
+            <span>3. Contact &amp; Emergency</span>
+          </div>
         </div>
 
         {/* Form Body */}
@@ -449,10 +525,7 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
                   type="button"
                   variant="primary"
                   size="md"
-                  onClick={() => {
-                    if (activeTab === 'personal') setActiveTab('employment')
-                    if (activeTab === 'employment') setActiveTab('contact')
-                  }}
+                  onClick={handleNextStep}
                 >
                   Continue to Next Step
                 </Button>
