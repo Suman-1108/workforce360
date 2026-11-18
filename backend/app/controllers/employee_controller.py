@@ -58,5 +58,9 @@ class EmployeeController:
         self.service.deactivate_employee(db=db, employee_id=employee_id, tenant_id=tenant_id)
         return success_response(data=None, message="Employee deactivated successfully.")
 
+    def delete_employee(self, db: Session, employee_id: int, tenant_id: int):
+        self.service.delete_employee(db=db, employee_id=employee_id, tenant_id=tenant_id)
+        return success_response(data=None, message="Employee removed successfully.")
+
 
 employee_controller = EmployeeController()

@@ -14,10 +14,11 @@ import {
   Coffee,
   ShieldCheck,
   Download,
+  Trash2,
 } from 'lucide-react'
 import type { Employee } from '../../types/employee'
-import { Button, Badge, Avatar } from '../../components/common'
-import { attendanceApi } from '../../services/api'
+import { Button, Badge, Avatar, ConfirmationDialog } from '../../components/common'
+import { attendanceApi, employeesApi } from '../../services/api'
 
 export interface EmployeeDetailsPageProps {
   employee: Employee
@@ -32,6 +33,26 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
     'overview' | 'attendance' | 'leave' | 'shift' | 'documents'
   >('overview')
   const [liveAttendance, setLiveAttendance] = useState<any[]>([])
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
+  const handleDelete = async () => {
+    if (!employee?.id) return
+    setIsDeleting(true)
+    setDeleteError('')
+    try {
+      await employeesApi.delete(employee.id)
+      window.dispatchEvent(new Event('wf360:refresh-counts'))
+      setConfirmDeleteOpen(false)
+      onBack()
+    } catch (err: any) {
+      console.error('Failed to remove employee:', err)
+      setDeleteError(err?.response?.data?.message || err?.message || 'Failed to remove employee.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   useEffect(() => {
     const numericId = Number(employee?.id)
@@ -143,6 +164,18 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
             onClick={() => alert(`Exporting dossier for ${employee.fullName}`)}
           >
             Export Dossier
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Trash2 className="h-3.5 w-3.5 text-rose-600" />}
+            onClick={() => {
+              setDeleteError('')
+              setConfirmDeleteOpen(true)
+            }}
+            className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:border-rose-300"
+          >
+            Remove Employee
           </Button>
         </div>
       </div>
@@ -549,6 +582,28 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialog for Permanent Employee Removal */}
+      <ConfirmationDialog
+        isOpen={confirmDeleteOpen}
+        onClose={() => {
+          if (!isDeleting) {
+            setConfirmDeleteOpen(false)
+            setDeleteError('')
+          }
+        }}
+        onConfirm={handleDelete}
+        title="Remove Employee"
+        message={
+          deleteError
+            ? `Error: ${deleteError}`
+            : `Are you sure you want to remove ${employee.fullName} (${employee.employeeId})? This will permanently delete their profile and credentials from the system.`
+        }
+        confirmText={isDeleting ? 'Removing...' : 'Remove Employee'}
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

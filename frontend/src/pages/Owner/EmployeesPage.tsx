@@ -6,12 +6,13 @@ import {
   Search,
   Filter,
   Eye,
+  Trash2,
   Building,
   Calendar,
   Sparkles,
 } from 'lucide-react'
 import type { Employee, EmployeeStatus } from '../../types/employee'
-import { Button, Badge, Avatar } from '../../components/common'
+import { Button, Badge, Avatar, ConfirmationDialog } from '../../components/common'
 import { employeesApi } from '../../services/api'
 
 export interface EmployeesPageProps {
@@ -29,7 +30,28 @@ export const EmployeesPage: React.FC<EmployeesPageProps> = ({
   const [departmentFilter, setDepartmentFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [currentPage, setCurrentPage] = useState(1)
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   const pageSize = 5
+
+  const handleDeleteEmployee = async () => {
+    if (!employeeToDelete) return
+    setIsDeleting(true)
+    setDeleteError('')
+    try {
+      await employeesApi.delete(employeeToDelete.id)
+      setEmployees((prev) => prev.filter((e) => e.id !== employeeToDelete.id))
+      setEmployeeToDelete(null)
+      window.dispatchEvent(new Event('wf360:refresh-counts'))
+    } catch (err: any) {
+      console.error('Failed to remove employee:', err)
+      const msg = err?.response?.data?.message || err?.message || 'Failed to remove employee.'
+      setDeleteError(msg)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -369,15 +391,29 @@ export const EmployeesPage: React.FC<EmployeesPageProps> = ({
 
                     {/* Action */}
                     <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewEmployee(emp)}
-                        leftIcon={<Eye className="h-3.5 w-3.5 text-[#075E54]" />}
-                        className="text-xs font-semibold hover:bg-[#E6F3F1] text-[#075E54]"
-                      >
-                        Profile
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onViewEmployee(emp)}
+                          leftIcon={<Eye className="h-3.5 w-3.5 text-[#075E54]" />}
+                          className="text-xs font-semibold hover:bg-[#E6F3F1] text-[#075E54]"
+                        >
+                          Profile
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setDeleteError('')
+                            setEmployeeToDelete(emp)
+                          }}
+                          leftIcon={<Trash2 className="h-3.5 w-3.5 text-rose-600" />}
+                          className="text-xs font-semibold hover:bg-rose-50 text-rose-600"
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -438,6 +474,28 @@ export const EmployeesPage: React.FC<EmployeesPageProps> = ({
           <span className="font-bold">Automated Attendance Ready:</span> Each active employee can immediately use the mobile Employee Portal to log geofenced check-ins and camera selfies for their assigned shift.
         </span>
       </div>
+
+      {/* Confirmation Dialog for Permanent Employee Removal */}
+      <ConfirmationDialog
+        isOpen={Boolean(employeeToDelete)}
+        onClose={() => {
+          if (!isDeleting) {
+            setEmployeeToDelete(null)
+            setDeleteError('')
+          }
+        }}
+        onConfirm={handleDeleteEmployee}
+        title="Remove Employee"
+        message={
+          deleteError
+            ? `Error: ${deleteError}`
+            : `Are you sure you want to remove ${employeeToDelete?.fullName} (${employeeToDelete?.employeeId})? This will permanently delete their profile and credentials from the system.`
+        }
+        confirmText={isDeleting ? 'Removing...' : 'Remove Employee'}
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

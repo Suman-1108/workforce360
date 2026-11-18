@@ -248,3 +248,16 @@ def update_employee(
 
     db.commit()
     return {"message": "Employee updated successfully"}
+
+
+@router.delete("/{employee_id}", summary="Remove Employee")
+def delete_employee(
+    employee_id: int,
+    tenant_id: int = Depends(get_tenant_id),
+    current_user: User = Depends(require_roles("owner", "superadmin")),
+    db: Session = Depends(get_db)
+):
+    """Permanently remove employee record and associated login account."""
+    from app.services.employee_service import employee_service
+    employee_service.delete_employee(db=db, employee_id=employee_id, tenant_id=tenant_id)
+    return {"message": "Employee removed successfully"}

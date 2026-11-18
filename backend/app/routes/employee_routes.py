@@ -81,14 +81,14 @@ def update_employee(
     )
 
 
-@router.delete("/{employee_id}", summary="Deactivate Employee")
-def deactivate_employee(
+@router.delete("/{employee_id}", summary="Remove Employee")
+def delete_employee(
     employee_id: int,
     tenant_id: int = Depends(get_tenant_id),
     current_user: User = Depends(require_roles("owner", "superadmin")),
     db: Session = Depends(get_db),
 ):
-    """Deactivate employee record and disable user authentication."""
-    return employee_controller.deactivate_employee(
+    """Permanently remove employee record and associated login account."""
+    return employee_controller.delete_employee(
         db=db, employee_id=employee_id, tenant_id=tenant_id
     )

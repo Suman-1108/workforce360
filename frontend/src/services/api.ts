@@ -131,6 +131,10 @@ export const employeesApi = {
     const res = await api.put(`/employees/${id}`, data);
     return unwrap(res);
   },
+  delete: async (id: number | string) => {
+    const res = await api.delete(`/employees/${id}`);
+    return unwrap(res);
+  },
 };
 
 export const attendanceApi = {

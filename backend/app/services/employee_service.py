@@ -4,6 +4,11 @@ from app.database.session import Session
 from app.models.employee import Employee
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.models.attendance import Attendance
+from app.models.leave import LeaveRequest
+from app.models.shift import EmployeeShift
+from app.models.uniform import UniformDistribution
+from app.models.employee_portal import WorkBreak, WorkUpdate, SupportTicket
 from app.repositories.employee_repository import employee_repository, EmployeeRepository
 from app.repositories.user_repository import user_repository, UserRepository
 from app.services.entitlement_service import entitlement_service, EntitlementService
@@ -251,6 +256,40 @@ class EmployeeService:
 
         db.commit()
         logger.info(f"Deactivated employee {emp.employee_id_number} (Tenant: {tenant_id})")
+
+    def delete_employee(self, db: Session, employee_id: int, tenant_id: int) -> None:
+        """Permanently delete employee record, associated login user, and child records."""
+        emp = self.emp_repo.get_by_id(db, employee_id=employee_id, tenant_id=tenant_id)
+        if not emp:
+            raise NotFoundException("Employee", employee_id)
+
+        user_id = emp.user_id
+        emp_id = emp.id
+        emp_code = emp.employee_id_number
+
+        # 1. Clean up child records belonging to this employee
+        try:
+            db.query(Attendance).filter(Attendance.employee_id == emp_id, Attendance.tenant_id == tenant_id).delete()
+            db.query(LeaveRequest).filter(LeaveRequest.employee_id == emp_id, LeaveRequest.tenant_id == tenant_id).delete()
+            db.query(WorkBreak).filter(WorkBreak.employee_id == emp_id, WorkBreak.tenant_id == tenant_id).delete()
+            db.query(WorkUpdate).filter(WorkUpdate.employee_id == emp_id, WorkUpdate.tenant_id == tenant_id).delete()
+            db.query(SupportTicket).filter(SupportTicket.employee_id == emp_id, SupportTicket.tenant_id == tenant_id).delete()
+            db.query(EmployeeShift).filter(EmployeeShift.employee_id == emp_id, EmployeeShift.tenant_id == tenant_id).delete()
+            db.query(UniformDistribution).filter(UniformDistribution.employee_id == emp_id, UniformDistribution.tenant_id == tenant_id).delete()
+        except Exception as e:
+            logger.warning(f"Child records cleanup for employee {emp_id} encountered: {e}")
+
+        # 2. Delete employee document
+        self.emp_repo.delete(db, emp)
+
+        # 3. Delete associated user login account if present
+        if user_id:
+            user = self.usr_repo.get_by_id(db, user_id=user_id)
+            if user and (user.tenant_id == tenant_id or user.role == "employee"):
+                self.usr_repo.delete(db, user)
+
+        db.commit()
+        logger.info(f"Permanently removed employee {emp_code} (ID: {emp_id}, User: {user_id}, Tenant: {tenant_id})")
 
 
 employee_service = EmployeeService()
