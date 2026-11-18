@@ -29,7 +29,11 @@ def test_list_uniform_items():
     assert body["success"] is True
     assert body["data"]["total"] >= 3
     names = [i["name"] for i in body["data"]["items"]]
-    assert "High-Visibility Safety Vest" in names or "Operations Polo Shirt" in names
+    assert (
+        "Elite Worker High-Vis Shirt & Trouser Set" in names
+        or "High-Visibility Safety Vest" in names
+        or "Operations Polo Shirt" in names
+    )
 
 
 def test_uniform_item_lifecycle_crud():

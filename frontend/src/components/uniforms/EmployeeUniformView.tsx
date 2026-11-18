@@ -4,15 +4,18 @@ import {
   Layers,
   CheckCircle2,
   RefreshCw,
+  Ruler,
 } from 'lucide-react'
 import { Button, Modal } from '../common'
 import { uniformsApi } from '../../services/api'
 import type { ClothingComponent } from './UniformOutfitCard'
+import { UniformFitGuideModal } from './UniformFitGuideModal'
 
 export const EmployeeUniformView: React.FC = () => {
   const [uniforms, setUniforms] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [swapModalOpen, setSwapModalOpen] = useState(false)
+  const [fitGuideOpen, setFitGuideOpen] = useState(false)
   const [targetUniform, setTargetUniform] = useState<any | null>(null)
   const [requestedSize, setRequestedSize] = useState<string>('XL')
   const [swapReason, setSwapReason] = useState<string>('')
@@ -105,10 +108,23 @@ export const EmployeeUniformView: React.FC = () => {
           </div>
         </div>
 
-        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 self-start sm:self-center flex items-center gap-1.5">
-          <CheckCircle2 className="h-3.5 w-3.5" />
-          Verified Active Allocation
-        </span>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setFitGuideOpen(true)}
+            leftIcon={<Ruler className="h-3.5 w-3.5 text-[#FF8B45]" />}
+            className="text-xs font-bold border-[#075E54] text-[#075E54] hover:bg-[#075E54]/5 cursor-pointer"
+          >
+            Worker Size &amp; Fit Guide
+          </Button>
+
+          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 self-start sm:self-center flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Verified Active Allocation
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
@@ -128,14 +144,14 @@ export const EmployeeUniformView: React.FC = () => {
               className="rounded-3xl border border-[#E5EAE4] bg-[#F5F7F1]/40 overflow-hidden grid grid-cols-1 md:grid-cols-12"
             >
               {/* Model Image */}
-              <div className="md:col-span-5 relative h-64 md:h-auto min-h-[260px] bg-[#EAEFE8]">
+              <div className="md:col-span-5 relative h-64 md:h-auto min-h-[260px] bg-white flex items-center justify-center p-2">
                 <img
-                  src={
-                    uni.model_image_url ||
-                    'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600&auto=format&fit=crop&q=80'
-                  }
+                  src={uni.model_image_url || '/uniforms/worker-fit-guide.jpg'}
                   alt={uni.name}
-                  className="w-full h-full object-cover object-top"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    ;(e.target as HTMLImageElement).src = '/uniforms/worker-fit-guide.jpg'
+                  }}
                 />
                 <div className="absolute top-3 left-3 flex items-center gap-1.5">
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-black/70 text-[#FF8B45]">
@@ -296,6 +312,13 @@ export const EmployeeUniformView: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {/* Worker Size & Fit Guide Modal */}
+      <UniformFitGuideModal
+        isOpen={fitGuideOpen}
+        onClose={() => setFitGuideOpen(false)}
+        outfitName="Worker High-Vis Uniform"
+      />
     </div>
   )
 }

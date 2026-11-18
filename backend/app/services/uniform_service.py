@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime, timezone
 from typing import Optional, List
 from app.database.session import Session
@@ -82,6 +83,142 @@ class UniformService:
     # ----------------------------------------------------
     # Inventory Catalog Management
     # ----------------------------------------------------
+    def seed_default_factory_presets(self, db: Session, tenant_id: int):
+        """Seed industrial and factory working uniform presets for a tenant."""
+        factory_presets = [
+            {
+                "name": "Elite Worker High-Vis Shirt & Trouser Set",
+                "code": "UNIF-IND-01",
+                "category": "Operations & Warehouse",
+                "gender_group": "Unisex (Athletic / Standard Fit)",
+                "model_image_url": "/uniforms/worker-fit-guide.jpg",
+                "description": "Standard-issue industrial worker two-piece uniform. Features high-visibility 3M reflective tape, durable ripstop fabric, multiple tool pockets, ventilated mesh underarms, and weather-resistant finish. Complete with size and fit reference chart.",
+                "colors": "Fluorescent Lime Yellow & Charcoal Black",
+                "sizes_available": "S, M, L, XL, XXL, 3XL",
+                "total_stock": 250,
+                "items_breakdown": json.dumps([
+                    {
+                        "type": "top",
+                        "label": "High-Vis Worker Shirt",
+                        "color": "Fluorescent Lime / Reflective Silver",
+                        "sizes": "S, M, L, XL, XXL, 3XL",
+                        "image_url": "/uniforms/worker-fit-guide.jpg"
+                    },
+                    {
+                        "type": "bottom",
+                        "label": "Heavy-Duty Cargo Work Trousers",
+                        "color": "Charcoal Black with Knee Reflective Tape",
+                        "sizes": "28, 30, 32, 34, 36, 38, 40",
+                        "image_url": "/uniforms/worker-fit-guide.jpg"
+                    },
+                    {
+                        "type": "shoes",
+                        "label": "Steel-Toe Factory Safety Boots",
+                        "color": "Industrial Matte Black",
+                        "sizes": "7, 8, 9, 10, 11, 12",
+                        "image_url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop&q=80"
+                    },
+                    {
+                        "type": "accessory",
+                        "label": "EN ISO 20471 Protective Helmet & Work Gloves",
+                        "color": "Hi-Vis Yellow / Black",
+                        "sizes": "Standard Adjustable",
+                        "image_url": "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400&auto=format&fit=crop&q=80"
+                    }
+                ])
+            },
+            {
+                "name": "Factory Heavy-Duty Boiler Suit & Coverall",
+                "code": "UNIF-IND-02",
+                "category": "Industrial & Mechanical Floor",
+                "gender_group": "Unisex Standard Fit",
+                "model_image_url": "/uniforms/worker-fit-guide.jpg",
+                "description": "Full-body protective action-back coverall engineered for heavy factory manufacturing, machine assembly, and plant operations. Flame-retardant treated poly-cotton with reinforced knee patches.",
+                "colors": "Navy Blue & Safety Orange",
+                "sizes_available": "S, M, L, XL, XXL, 3XL",
+                "total_stock": 180,
+                "items_breakdown": json.dumps([
+                    {
+                        "type": "outerwear",
+                        "label": "Heavy-Duty Action-Back Boiler Suit / Coverall",
+                        "color": "Navy Blue & Safety Orange Accents",
+                        "sizes": "S, M, L, XL, XXL, 3XL",
+                        "image_url": "/uniforms/worker-fit-guide.jpg"
+                    },
+                    {
+                        "type": "shoes",
+                        "label": "Oil & Acid Resistant Steel-Toe Work Boots",
+                        "color": "Dark Brown Leather",
+                        "sizes": "7, 8, 9, 10, 11, 12",
+                        "image_url": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop&q=80"
+                    },
+                    {
+                        "type": "accessory",
+                        "label": "High-Impact Polycarbonate Safety Goggles",
+                        "color": "Clear Anti-Fog",
+                        "sizes": "Universal Fit",
+                        "image_url": "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400&auto=format&fit=crop&q=80"
+                    }
+                ])
+            },
+            {
+                "name": "Warehouse Rapid Logistics High-Vis Vest & Cargo Set",
+                "code": "UNIF-IND-03",
+                "category": "Logistics & Warehouse Operations",
+                "gender_group": "Unisex Standard Fit",
+                "model_image_url": "/uniforms/worker-fit-guide.jpg",
+                "description": "Logistics dispatch uniform kit featuring lightweight zip-front Class 2 high-vis vest with transparent badge sleeve, tactical pen holders, and tear-resistant cargo work trousers.",
+                "colors": "Neon Safety Orange & Black",
+                "sizes_available": "S, M, L, XL, XXL",
+                "total_stock": 200,
+                "items_breakdown": json.dumps([
+                    {
+                        "type": "outerwear",
+                        "label": "Zip-Front High-Vis Mesh Safety Vest",
+                        "color": "Fluorescent Safety Orange with 3M Bands",
+                        "sizes": "S, M, L, XL, XXL",
+                        "image_url": "/uniforms/worker-fit-guide.jpg"
+                    },
+                    {
+                        "type": "top",
+                        "label": "Moisture-Wicking Warehouse Operations Polo",
+                        "color": "Graphite Black",
+                        "sizes": "S, M, L, XL, XXL",
+                        "image_url": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=80"
+                    },
+                    {
+                        "type": "bottom",
+                        "label": "Reinforced Ripstop Cargo Work Pants",
+                        "color": "Navy Blue",
+                        "sizes": "30, 32, 34, 36, 38",
+                        "image_url": "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=400&auto=format&fit=crop&q=80"
+                    }
+                ])
+            }
+        ]
+
+        created = []
+        for p in factory_presets:
+            item = UniformItem(
+                tenant_id=tenant_id,
+                name=p["name"],
+                code=p["code"],
+                category=p["category"],
+                gender_group=p["gender_group"],
+                model_image_url=p["model_image_url"],
+                description=p["description"],
+                colors=p["colors"],
+                sizes_available=p["sizes_available"],
+                total_stock=p["total_stock"],
+                distributed_stock=0,
+                is_active=True,
+                is_archived=False,
+                items_breakdown=p["items_breakdown"],
+            )
+            created_item = self.uniform_repo.create_item(db, item)
+            created.append(created_item)
+        return created
+
     def list_items(
         self,
         db: Session,
@@ -91,6 +228,8 @@ class UniformService:
     ) -> UniformItemListResponse:
         """List uniform inventory items with real-time stock balance."""
         items = self.uniform_repo.list_items(db, tenant_id, category=category, search=search)
+        if not items and not category and not search:
+            items = self.seed_default_factory_presets(db, tenant_id)
         responses = [self._to_item_response(i) for i in items]
         return UniformItemListResponse(total=len(responses), items=responses)
 

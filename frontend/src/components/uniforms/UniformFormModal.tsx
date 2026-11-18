@@ -8,9 +8,12 @@ import {
   Save,
   AlertCircle,
   Tag,
+  Sparkles,
+  CheckCircle2,
 } from 'lucide-react'
 import { Button, Input } from '../common'
 import type { UniformOutfit, ClothingComponent } from './UniformOutfitCard'
+import { FACTORY_UNIFORM_PRESETS, type FactoryUniformPreset } from './factoryPresets'
 
 interface UniformFormModalProps {
   isOpen: boolean
@@ -20,11 +23,12 @@ interface UniformFormModalProps {
 }
 
 const CATEGORIES = [
-  'Corporate & Executive',
   'Operations & Warehouse',
+  'Industrial & Mechanical Floor',
+  'Logistics & Warehouse Operations',
+  'Corporate & Executive',
   'Security & Guard',
   'Field Engineering',
-  'Hospitality & Front Desk',
 ]
 
 const COMPONENT_TYPES = [
@@ -42,52 +46,55 @@ export const UniformFormModal: React.FC<UniformFormModalProps> = ({
   onSaved,
 }) => {
   const isEditing = Boolean(outfitToEdit)
+  const defaultPreset = FACTORY_UNIFORM_PRESETS[0]
+  const [selectedPresetId, setSelectedPresetId] = useState<string>(defaultPreset.id)
 
   const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    category: 'Corporate & Executive',
-    gender_group: 'Unisex',
-    model_image_url: '',
-    description: '',
-    colors: '',
-    sizes_available: 'S, M, L, XL, 2XL',
-    total_stock: 100,
+    name: defaultPreset.name,
+    code: defaultPreset.code,
+    category: defaultPreset.category,
+    gender_group: defaultPreset.gender_group,
+    model_image_url: defaultPreset.model_image_url,
+    description: defaultPreset.description,
+    colors: defaultPreset.colors,
+    sizes_available: defaultPreset.sizes_available,
+    total_stock: defaultPreset.total_stock,
     is_active: true,
   })
 
-  const [components, setComponents] = useState<ClothingComponent[]>([
-    {
-      type: 'top',
-      label: 'Corporate Polo / Shirt',
-      color: 'Teal & White',
-      sizes: 'S, M, L, XL',
-      image_url: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=80',
-    },
-    {
-      type: 'bottom',
-      label: 'Tailored Chino Trousers',
-      color: 'Charcoal Grey',
-      sizes: '30, 32, 34, 36',
-      image_url: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=400&auto=format&fit=crop&q=80',
-    },
-  ])
-
+  const [components, setComponents] = useState<ClothingComponent[]>(defaultPreset.components)
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  const handleSelectPreset = (preset: FactoryUniformPreset) => {
+    setSelectedPresetId(preset.id)
+    setFormData({
+      name: preset.name,
+      code: preset.code,
+      category: preset.category,
+      gender_group: preset.gender_group,
+      model_image_url: preset.model_image_url,
+      description: preset.description,
+      colors: preset.colors,
+      sizes_available: preset.sizes_available,
+      total_stock: preset.total_stock,
+      is_active: preset.is_active,
+    })
+    setComponents(preset.components)
+  }
 
   useEffect(() => {
     if (outfitToEdit) {
       setFormData({
         name: outfitToEdit.name || '',
         code: outfitToEdit.code || '',
-        category: outfitToEdit.category || 'Corporate & Executive',
-        gender_group: outfitToEdit.gender_group || 'Unisex',
-        model_image_url: outfitToEdit.model_image_url || '',
+        category: outfitToEdit.category || 'Operations & Warehouse',
+        gender_group: outfitToEdit.gender_group || 'Unisex (Athletic / Standard Fit)',
+        model_image_url: outfitToEdit.model_image_url || '/uniforms/worker-fit-guide.jpg',
         description: outfitToEdit.description || '',
-        colors: outfitToEdit.colors || '',
-        sizes_available: outfitToEdit.sizes_available || 'S, M, L, XL, 2XL',
-        total_stock: outfitToEdit.total_stock || 100,
+        colors: outfitToEdit.colors || 'Fluorescent Lime Yellow & Charcoal Black',
+        sizes_available: outfitToEdit.sizes_available || 'S, M, L, XL, XXL, 3XL',
+        total_stock: outfitToEdit.total_stock || 250,
         is_active: outfitToEdit.is_active ?? true,
       })
 
@@ -103,37 +110,21 @@ export const UniformFormModal: React.FC<UniformFormModalProps> = ({
         }
       }
     } else {
+      const preset = FACTORY_UNIFORM_PRESETS[0]
+      setSelectedPresetId(preset.id)
       setFormData({
-        name: '',
-        code: `UNIF-${Math.floor(1000 + Math.random() * 9000)}`,
-        category: 'Corporate & Executive',
-        gender_group: 'Corporate & HQ Staff',
-        model_image_url:
-          'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&auto=format&fit=crop&q=80',
-        description: '',
-        colors: 'Deep Teal & Khaki',
-        sizes_available: 'S, M, L, XL, 2XL',
-        total_stock: 120,
+        name: preset.name,
+        code: preset.code,
+        category: preset.category,
+        gender_group: preset.gender_group,
+        model_image_url: preset.model_image_url,
+        description: preset.description,
+        colors: preset.colors,
+        sizes_available: preset.sizes_available,
+        total_stock: preset.total_stock,
         is_active: true,
       })
-      setComponents([
-        {
-          type: 'top',
-          label: 'Executive Polo Shirt',
-          color: 'Deep Teal',
-          sizes: 'S, M, L, XL',
-          image_url:
-            'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=400&auto=format&fit=crop&q=80',
-        },
-        {
-          type: 'bottom',
-          label: 'Straight-Fit Chinos',
-          color: 'Khaki',
-          sizes: '30, 32, 34, 36',
-          image_url:
-            'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=400&auto=format&fit=crop&q=80',
-        },
-      ])
+      setComponents(preset.components)
     }
     setErrorMsg(null)
   }, [outfitToEdit, isOpen])
@@ -226,10 +217,67 @@ export const UniformFormModal: React.FC<UniformFormModalProps> = ({
             </div>
           )}
 
+          {/* Preset Factory Working Uniforms Quick Selector */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-[#E6F3F1]/80 border border-[#BDE0D9] space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#075E54] flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-[#FF8B45]" />
+                  Preset Factory Working Uniforms (No Image Upload Needed)
+                </h3>
+                <p className="text-[11px] text-[#5A6B65]">
+                  Select an industrial factory workwear standard to auto-load specifications, size matrix, and factory model photography.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {FACTORY_UNIFORM_PRESETS.map((p) => {
+                const isSelected = formData.name === p.name || selectedPresetId === p.id
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => handleSelectPreset(p)}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-white border-[#075E54] shadow-md ring-2 ring-[#075E54]/25'
+                        : 'bg-white/80 border-[#CBD5C8] hover:border-[#075E54] hover:bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <img
+                        src={p.model_image_url}
+                        alt={p.name}
+                        className="w-11 h-11 rounded-xl object-contain bg-[#183B36]/5 p-0.5 border border-[#E5EAE4]"
+                      />
+                      <div className="overflow-hidden">
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#075E54]/10 text-[#075E54]">
+                          {p.code}
+                        </span>
+                        <h4 className="text-xs font-bold text-[#183B36] line-clamp-1 mt-0.5">
+                          {p.name}
+                        </h4>
+                      </div>
+                    </div>
+                    <div className="text-[10px] text-[#78847F] line-clamp-2">
+                      {p.colors} &bull; {p.category}
+                    </div>
+                    {isSelected && (
+                      <div className="mt-2 text-[10px] font-bold text-emerald-700 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Preset Applied &bull; Ready
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {/* Section 1: Core Details */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#183B36] border-b border-[#E5EAE4] pb-2">
-              1. Outfit Metadata & Classification
+              1. Outfit Metadata &amp; Classification
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -284,37 +332,44 @@ export const UniformFormModal: React.FC<UniformFormModalProps> = ({
           {/* Section 2: Model Photography & Media */}
           <div className="space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#183B36] border-b border-[#E5EAE4] pb-2">
-              2. Full Ensemble Model Photography
+              2. Full Ensemble Model Photography (Preset Active)
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start">
-              <div className="sm:col-span-8">
-                <Input
-                  label="Model Wearing Outfit (High-Res Image URL)"
-                  value={formData.model_image_url}
-                  onChange={(e) => setFormData({ ...formData, model_image_url: e.target.value })}
-                  placeholder="https://images.unsplash.com/... or Cloudinary URL"
-                  leftIcon={<ImageIcon className="h-4 w-4 text-[#78847F]" />}
-                  helperText="Provide direct image URL from Cloudinary or CDN. Images are stored securely by reference, not binary blobs."
-                  required
-                />
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center p-3.5 rounded-2xl bg-[#F5F7F1] border border-[#E5EAE4]">
+              <div className="sm:col-span-8 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-[#183B36]">
+                    Built-in Factory Uniform Imagery
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Auto Preset
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#78847F] leading-relaxed">
+                  Dual front &amp; back view safety worker wear photography with integrated reflective tape visualization is pre-linked. No image upload is required.
+                </p>
+                <div className="pt-1">
+                  <Input
+                    label="Custom Image URL (Optional)"
+                    value={formData.model_image_url}
+                    onChange={(e) => setFormData({ ...formData, model_image_url: e.target.value })}
+                    placeholder="/uniforms/worker-fit-guide.jpg"
+                    leftIcon={<ImageIcon className="h-4 w-4 text-[#78847F]" />}
+                  />
+                </div>
               </div>
 
-              <div className="sm:col-span-4 p-2 rounded-2xl bg-[#F5F7F1] border border-[#E5EAE4] text-center">
+              <div className="sm:col-span-4 p-2 rounded-2xl bg-white border border-[#E5EAE4] text-center shadow-xs">
                 <span className="text-[10px] font-bold text-[#78847F] uppercase block mb-1">
-                  Model Preview
+                  Model Visual Preview
                 </span>
-                <div className="w-full h-32 rounded-xl overflow-hidden bg-white border border-[#E5EAE4]">
+                <div className="w-full h-36 rounded-xl overflow-hidden bg-white border border-[#E5EAE4] flex items-center justify-center">
                   <img
-                    src={
-                      formData.model_image_url ||
-                      'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&auto=format&fit=crop&q=80'
-                    }
+                    src={formData.model_image_url || '/uniforms/worker-fit-guide.jpg'}
                     alt="Preview"
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-contain p-1"
                     onError={(e) => {
-                      ;(e.target as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&auto=format&fit=crop&q=80'
+                      ;(e.target as HTMLImageElement).src = '/uniforms/worker-fit-guide.jpg'
                     }}
                   />
                 </div>
@@ -323,7 +378,7 @@ export const UniformFormModal: React.FC<UniformFormModalProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-[#183B36] mb-1">
-                Outfit Description & Wearer Guidelines
+                Outfit Description &amp; Wearer Guidelines
               </label>
               <textarea
                 value={formData.description}

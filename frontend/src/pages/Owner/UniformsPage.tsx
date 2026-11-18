@@ -7,6 +7,7 @@ import {
   ClipboardList,
   RefreshCw,
   CheckCircle2,
+  Ruler,
 } from 'lucide-react'
 import { Button, Badge, Avatar } from '../../components/common'
 import { uniformsApi } from '../../services/api'
@@ -15,6 +16,7 @@ import {
   UniformDetailsModal,
   UniformFormModal,
   UniformAssignmentModal,
+  UniformFitGuideModal,
 } from '../../components/uniforms'
 import type { UniformOutfit } from '../../components/uniforms'
 
@@ -23,6 +25,7 @@ export const UniformsPage: React.FC = () => {
   const [outfits, setOutfits] = useState<UniformOutfit[]>([])
   const [assignments, setAssignments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [fitGuideOpen, setFitGuideOpen] = useState(false)
 
   // Details Modal
   const [selectedOutfit, setSelectedOutfit] = useState<UniformOutfit | null>(null)
@@ -61,18 +64,18 @@ export const UniformsPage: React.FC = () => {
             id: it.id,
             name: it.name,
             code: it.code || `UNIF-${it.id}`,
-            category: it.category || 'Corporate & Executive',
-            gender_group: it.gender_group || 'Unisex',
+            category: it.category || 'Operations & Warehouse',
+            gender_group: it.gender_group || 'Unisex (Athletic / Standard Fit)',
             model_image_url:
               it.model_image_url ||
-              'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&auto=format&fit=crop&q=80',
-            description: it.description,
-            colors: it.colors || 'Deep Teal & Khaki',
-            sizes_available: it.sizes_available || 'S, M, L, XL, 2XL',
-            total_stock: it.total_stock ?? 100,
+              '/uniforms/worker-fit-guide.jpg',
+            description: it.description || 'Standard-issue industrial worker two-piece uniform. Features high-visibility 3M reflective tape, durable ripstop fabric, multiple tool pockets, ventilated mesh underarms, and weather-resistant finish.',
+            colors: it.colors || 'Fluorescent Lime Yellow & Charcoal Black',
+            sizes_available: it.sizes_available || 'S, M, L, XL, XXL, 3XL',
+            total_stock: it.total_stock ?? 250,
             distributed_stock: it.distributed_stock ?? 0,
             available_stock:
-              it.available_stock ?? Math.max(0, (it.total_stock ?? 100) - (it.distributed_stock ?? 0)),
+              it.available_stock ?? Math.max(0, (it.total_stock ?? 250) - (it.distributed_stock ?? 0)),
             is_active: it.is_active ?? true,
             is_archived: it.is_archived ?? false,
             items_breakdown: it.items_breakdown,
@@ -166,6 +169,16 @@ export const UniformsPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setFitGuideOpen(true)}
+            leftIcon={<Ruler className="h-3.5 w-3.5 text-[#FF8B45]" />}
+            className="text-xs font-bold border-[#075E54] text-[#075E54] hover:bg-[#075E54]/5 cursor-pointer"
+          >
+            Worker Size &amp; Fit Guide
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={fetchData}
             leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
             className="text-xs font-semibold border-[#E5EAE4] hover:bg-[#F5F7F1] cursor-pointer"
@@ -183,6 +196,40 @@ export const UniformsPage: React.FC = () => {
             Create New Outfit
           </Button>
         </div>
+      </div>
+
+      {/* Factory Workwear Standard Highlight Banner */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-[#183B36] to-[#075E54] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg border border-[#075E54]">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+            <Shirt className="h-6 w-6 text-[#FF8B45]" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-[#FF8B45] text-white">
+                ELITE INDUSTRIAL STANDARD
+              </span>
+              <span className="text-xs text-[#BDE0D9] font-medium">
+                Preset Factory Working Uniforms Active
+              </span>
+            </div>
+            <h3 className="text-sm sm:text-base font-extrabold text-white mt-0.5">
+              Worker Shirt &amp; Trouser Fit Guide &bull; EN ISO 20471 Certified
+            </h3>
+            <p className="text-xs text-[#E6F3F1] mt-0.5 max-w-2xl">
+              Equipped with built-in high-visibility worker presets, dual front/back view photography, and exact 6-tier anatomical size charts (S through 3XL).
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setFitGuideOpen(true)}
+          className="px-4 py-2 rounded-xl bg-white text-[#183B36] hover:bg-[#F5F7F1] text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 self-start sm:self-center cursor-pointer shrink-0"
+        >
+          <Ruler className="h-4 w-4 text-[#075E54]" />
+          <span>Open Full Sizing Chart</span>
+        </button>
       </div>
 
       {/* Navigation Tabs */}
@@ -414,6 +461,12 @@ export const UniformsPage: React.FC = () => {
           showToast('Uniform assigned successfully.')
           fetchData()
         }}
+      />
+
+      {/* Full Worker Shirt & Trouser Size & Fit Guide Modal */}
+      <UniformFitGuideModal
+        isOpen={fitGuideOpen}
+        onClose={() => setFitGuideOpen(false)}
       />
     </div>
   )

@@ -9,9 +9,11 @@ import {
   UserCheck,
   Edit3,
   ShieldCheck,
+  Ruler,
 } from 'lucide-react'
 import { Button, Badge, Avatar } from '../common'
 import type { UniformOutfit, ClothingComponent } from './UniformOutfitCard'
+import { UniformFitGuideModal } from './UniformFitGuideModal'
 
 interface UniformDetailsModalProps {
   outfit: UniformOutfit | null
@@ -44,6 +46,7 @@ export const UniformDetailsModal: React.FC<UniformDetailsModalProps> = ({
   }, [outfit.items_breakdown])
 
   const [selectedCompIndex, setSelectedCompIndex] = useState<number>(0)
+  const [fitGuideOpen, setFitGuideOpen] = useState(false)
   const activeComponent = components[selectedCompIndex] || null
 
   const availableStock =
@@ -83,14 +86,25 @@ export const UniformDetailsModal: React.FC<UniformDetailsModalProps> = ({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-xl text-[#78847F] hover:bg-[#F5F7F1] hover:text-[#183B36] cursor-pointer"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFitGuideOpen(true)}
+              className="px-3 py-1.5 rounded-xl border border-[#075E54] text-[#075E54] bg-[#075E54]/5 hover:bg-[#075E54]/10 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Ruler className="h-3.5 w-3.5 text-[#FF8B45]" />
+              <span>Worker Size &amp; Fit Guide</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-xl text-[#78847F] hover:bg-[#F5F7F1] hover:text-[#183B36] cursor-pointer"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Scrollable Body */}
@@ -100,12 +114,12 @@ export const UniformDetailsModal: React.FC<UniformDetailsModalProps> = ({
             {/* Primary Model Photo */}
             <div className="md:col-span-5 relative rounded-2xl overflow-hidden bg-[#F5F7F1] border border-[#E5EAE4] h-80 sm:h-96">
               <img
-                src={
-                  outfit.model_image_url ||
-                  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&auto=format&fit=crop&q=80'
-                }
+                src={outfit.model_image_url || '/uniforms/worker-fit-guide.jpg'}
                 alt={outfit.name}
-                className="w-full h-full object-cover object-top"
+                className="w-full h-full object-contain p-2 bg-white"
+                onError={(e) => {
+                  ;(e.target as HTMLImageElement).src = '/uniforms/worker-fit-guide.jpg'
+                }}
               />
               <div className="absolute top-3 right-3">
                 <span
@@ -346,6 +360,17 @@ export const UniformDetailsModal: React.FC<UniformDetailsModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setFitGuideOpen(true)}
+              leftIcon={<Ruler className="h-3.5 w-3.5 text-[#FF8B45]" />}
+              className="text-xs font-bold border-[#075E54] text-[#075E54] hover:bg-[#075E54]/5 cursor-pointer"
+            >
+              Size &amp; Fit Guide
+            </Button>
+
             {onEdit && (
               <Button
                 type="button"
@@ -379,6 +404,13 @@ export const UniformDetailsModal: React.FC<UniformDetailsModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Worker Size & Fit Guide Modal */}
+      <UniformFitGuideModal
+        isOpen={fitGuideOpen}
+        onClose={() => setFitGuideOpen(false)}
+        outfitName={outfit.name}
+      />
     </div>
   )
 }

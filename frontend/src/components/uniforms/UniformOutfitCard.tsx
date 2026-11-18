@@ -10,7 +10,9 @@ import {
   Sparkles,
   Check,
   RotateCcw,
+  Ruler,
 } from 'lucide-react'
+import { UniformFitGuideModal } from './UniformFitGuideModal'
 
 export interface ClothingComponent {
   type: 'top' | 'bottom' | 'outerwear' | 'shoes' | 'accessory'
@@ -78,6 +80,7 @@ export const UniformOutfitCard: React.FC<UniformOutfitCardProps> = ({
 
   // Context menu
   const [menuOpen, setMenuOpen] = useState(false)
+  const [fitGuideOpen, setFitGuideOpen] = useState(false)
 
   const availableStock =
     outfit.available_stock ?? Math.max(0, outfit.total_stock - outfit.distributed_stock)
@@ -246,15 +249,11 @@ export const UniformOutfitCard: React.FC<UniformOutfitCardProps> = ({
           {/* Left Model Capsule (7 cols on desktop, full width on mobile) */}
           <div className="sm:col-span-7 rounded-3xl bg-[#ECEEE9] relative overflow-hidden flex items-center justify-center min-h-[380px] sm:min-h-[440px] group/model shadow-inner">
             <img
-              src={
-                outfit.model_image_url ||
-                'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&auto=format&fit=crop&q=80'
-              }
+              src={outfit.model_image_url || '/uniforms/worker-fit-guide.jpg'}
               alt={outfit.name}
               className="w-full h-full object-contain object-bottom group-hover/model:scale-[1.03] transition-transform duration-700 ease-out pointer-events-none"
               onError={(e) => {
-                ;(e.target as HTMLImageElement).src =
-                  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&auto=format&fit=crop&q=80'
+                ;(e.target as HTMLImageElement).src = '/uniforms/worker-fit-guide.jpg'
               }}
             />
 
@@ -312,15 +311,30 @@ export const UniformOutfitCard: React.FC<UniformOutfitCardProps> = ({
               )
             })}
 
-            {/* Quick Inspect Button on Model */}
-            <button
-              type="button"
-              onClick={() => onViewDetails(outfit)}
-              className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md hover:bg-white text-[#183B36] text-[11px] font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer"
-            >
-              <Eye className="h-3 w-3 text-[#075E54]" />
-              <span>Inspect Look</span>
-            </button>
+            {/* Action Bar on Model: Inspect Look + Worker Size & Fit Guide */}
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-1.5">
+              <button
+                type="button"
+                onClick={() => onViewDetails(outfit)}
+                className="bg-white/95 backdrop-blur-md hover:bg-white text-[#183B36] text-[10px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 transition-all hover:scale-105 cursor-pointer"
+              >
+                <Eye className="h-3 w-3 text-[#075E54]" />
+                <span>Inspect</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setFitGuideOpen(true)
+                }}
+                className="bg-[#183B36]/95 backdrop-blur-md hover:bg-[#075E54] text-white text-[10px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-1.5 rounded-full shadow-md flex items-center gap-1 transition-all hover:scale-105 cursor-pointer"
+                title="View worker shirt & trouser size chart and fit guide"
+              >
+                <Ruler className="h-3 w-3 text-[#FF8B45]" />
+                <span>Fit Guide</span>
+              </button>
+            </div>
           </div>
 
           {/* Right Garment Components Column (5 cols on desktop, horizontal scroll on mobile) */}
@@ -461,6 +475,13 @@ export const UniformOutfitCard: React.FC<UniformOutfitCardProps> = ({
           </span>
         </button>
       </div>
+
+      {/* Sizing & Fit Guide Modal matching Reference Image */}
+      <UniformFitGuideModal
+        isOpen={fitGuideOpen}
+        onClose={() => setFitGuideOpen(false)}
+        outfitName={outfit.name}
+      />
     </div>
   )
 }

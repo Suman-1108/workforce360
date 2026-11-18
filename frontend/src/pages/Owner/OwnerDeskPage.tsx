@@ -536,8 +536,59 @@ export const OwnerDeskPage: React.FC = () => {
               Set Today&apos;s Uniform &amp; Dress Code
             </h2>
             <p className="text-xs text-[#78847F] mt-0.5">
-              This schedule appears immediately on every employee&apos;s Today dashboard.
+              This schedule appears immediately on every employee&apos;s Today dashboard. Select a factory preset or customize details.
             </p>
+          </div>
+
+          {/* Quick Factory Uniform Presets */}
+          <div className="p-3.5 rounded-2xl bg-[#F5F7F1] border border-[#E5EAE4] space-y-2">
+            <span className="text-[11px] font-bold text-[#183B36] uppercase tracking-wider block">
+              1-Click Factory Working Uniform Presets:
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setUniformForm({
+                  ...uniformForm,
+                  uniform_title: 'Elite Worker High-Vis Shirt & Trouser Set',
+                  dress_code: 'Factory Industrial High-Vis (EN ISO 20471)',
+                  color_theme: 'Fluorescent Lime Yellow & Charcoal Black',
+                  items_required: 'Two-Tone High-Vis Shirt, Cargo Trousers, Steel-Toe Safety Boots, Helmet',
+                  notes: 'Mandatory 3M reflective tape visibility on factory floor and warehouse bays.'
+                })}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white text-[#075E54] hover:bg-[#075E54] hover:text-white transition-all cursor-pointer border border-[#BDE0D9] shadow-xs"
+              >
+                🦺 Elite High-Vis Worker Set
+              </button>
+              <button
+                type="button"
+                onClick={() => setUniformForm({
+                  ...uniformForm,
+                  uniform_title: 'Factory Heavy-Duty Boiler Suit & Coverall',
+                  dress_code: 'Plant Machine Floor Standard',
+                  color_theme: 'Navy Blue & Safety Orange Accents',
+                  items_required: 'Flame-Retardant Boiler Suit, Steel-Toe Boots, Impact Goggles',
+                  notes: 'Required for machinery maintenance and assembly shifts.'
+                })}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white text-[#075E54] hover:bg-[#075E54] hover:text-white transition-all cursor-pointer border border-[#BDE0D9] shadow-xs"
+              >
+                ⚙️ Heavy-Duty Boiler Suit
+              </button>
+              <button
+                type="button"
+                onClick={() => setUniformForm({
+                  ...uniformForm,
+                  uniform_title: 'Warehouse Rapid Logistics High-Vis Vest & Cargo',
+                  dress_code: 'Logistics Dispatch Standard',
+                  color_theme: 'Neon Safety Orange & Black',
+                  items_required: 'Zip-Front Class 2 Vest, Operations Polo, Cargo Work Pants',
+                  notes: 'Barcode scanner ID sleeve must be clipped to front vest loop.'
+                })}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-white text-[#075E54] hover:bg-[#075E54] hover:text-white transition-all cursor-pointer border border-[#BDE0D9] shadow-xs"
+              >
+                📦 Warehouse Logistics Vest
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleSaveUniform} className="space-y-4">
