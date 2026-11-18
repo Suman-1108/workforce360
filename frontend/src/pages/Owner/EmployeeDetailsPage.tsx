@@ -63,6 +63,39 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
     }
   }, [employee?.id])
 
+  // Safe normalized nested fields for live MongoDB employee records
+  const shiftObj =
+    typeof employee?.assignedShift === 'object' && employee?.assignedShift !== null
+      ? employee.assignedShift
+      : {
+          name: typeof employee?.assignedShift === 'string' ? employee.assignedShift : 'Standard Day Shift',
+          timing: '09:00 AM - 06:00 PM',
+          graceMinutes: 15,
+          breakMinutes: 45,
+        }
+
+  const addressObj = {
+    street: employee?.address?.street || 'Branch Campus Address',
+    city: employee?.address?.city || 'Headquarters',
+    state: employee?.address?.state || '',
+    postalCode: employee?.address?.postalCode || '',
+  }
+
+  const emergencyObj = {
+    name: employee?.emergencyContact?.name || 'Emergency Contact',
+    relation:
+      (employee?.emergencyContact as any)?.relation ||
+      (employee?.emergencyContact as any)?.relationship ||
+      'Family',
+    phone: employee?.emergencyContact?.phone || 'Not provided',
+  }
+
+  const leaveBal = {
+    annual: employee?.leaveBalance?.annual || { total: 18, used: 4 },
+    medical: employee?.leaveBalance?.medical || { total: 10, used: 1 },
+    casual: employee?.leaveBalance?.casual || { total: 12, used: 2 },
+  }
+
   // Fallback if no records recorded yet
   const attendanceHistory = liveAttendance.length > 0 ? liveAttendance : [
     {
@@ -159,10 +192,10 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
                 Assigned Shift
               </span>
               <span className="text-xs font-bold text-[#075E54] block">
-                {employee.assignedShift.name}
+                {shiftObj.name}
               </span>
               <span className="text-[11px] text-[#78847F]">
-                {employee.assignedShift.timing}
+                {shiftObj.timing}
               </span>
             </div>
           </div>
@@ -219,7 +252,7 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               <div>
                 <span className="text-[#78847F] block">Reporting Manager</span>
                 <span className="font-semibold text-[#183B36] mt-0.5 block">
-                  {employee.reportingManager}
+                  {employee.reportingManager || 'Organization Owner'}
                 </span>
               </div>
               <div>
@@ -240,18 +273,18 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               <div>
                 <span className="text-[#78847F] block">Residential Address</span>
                 <span className="font-semibold text-[#183B36] mt-0.5 block">
-                  {employee.address.street}, {employee.address.city}, {employee.address.state} {employee.address.postalCode}
+                  {[addressObj.street, addressObj.city, [addressObj.state, addressObj.postalCode].filter(Boolean).join(' ')].filter(Boolean).join(', ')}
                 </span>
               </div>
               <div className="pt-2 border-t border-[#E5EAE4] flex items-center justify-between">
                 <div>
                   <span className="text-[#78847F] block">Emergency Contact</span>
                   <span className="font-semibold text-[#183B36] mt-0.5 block">
-                    {employee.emergencyContact.name} ({employee.emergencyContact.relation})
+                    {emergencyObj.name} ({emergencyObj.relation})
                   </span>
                 </div>
                 <div className="font-mono text-[#075E54] font-bold">
-                  {employee.emergencyContact.phone}
+                  {emergencyObj.phone}
                 </div>
               </div>
             </div>
@@ -374,10 +407,10 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               </span>
               <div className="flex items-baseline gap-2 mt-2">
                 <span className="text-3xl font-extrabold text-[#075E54]">
-                  {employee.leaveBalance.annual.total - employee.leaveBalance.annual.used}
+                  {leaveBal.annual.total - leaveBal.annual.used}
                 </span>
                 <span className="text-xs text-[#78847F]">
-                  / {employee.leaveBalance.annual.total} days remaining
+                  / {leaveBal.annual.total} days remaining
                 </span>
               </div>
             </div>
@@ -388,10 +421,10 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               </span>
               <div className="flex items-baseline gap-2 mt-2">
                 <span className="text-3xl font-extrabold text-[#FF8B45]">
-                  {employee.leaveBalance.medical.total - employee.leaveBalance.medical.used}
+                  {leaveBal.medical.total - leaveBal.medical.used}
                 </span>
                 <span className="text-xs text-[#78847F]">
-                  / {employee.leaveBalance.medical.total} days remaining
+                  / {leaveBal.medical.total} days remaining
                 </span>
               </div>
             </div>
@@ -402,10 +435,10 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               </span>
               <div className="flex items-baseline gap-2 mt-2">
                 <span className="text-3xl font-extrabold text-purple-600">
-                  {employee.leaveBalance.casual.total - employee.leaveBalance.casual.used}
+                  {leaveBal.casual.total - leaveBal.casual.used}
                 </span>
                 <span className="text-xs text-[#78847F]">
-                  / {employee.leaveBalance.casual.total} days remaining
+                  / {leaveBal.casual.total} days remaining
                 </span>
               </div>
             </div>
@@ -433,7 +466,7 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               <Clock className="h-4 w-4 text-[#075E54] mb-2" />
               <span className="text-[#78847F] block">Daily Window</span>
               <span className="font-extrabold text-[#183B36] text-sm mt-1 block">
-                {employee.assignedShift.timing}
+                {shiftObj.timing}
               </span>
             </div>
 
@@ -441,7 +474,7 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               <AlertTriangle className="h-4 w-4 text-[#FF8B45] mb-2" />
               <span className="text-[#78847F] block">Grace Period</span>
               <span className="font-extrabold text-[#183B36] text-sm mt-1 block">
-                {employee.assignedShift.graceMinutes} Minutes
+                {shiftObj.graceMinutes} Minutes
               </span>
             </div>
 
@@ -449,7 +482,7 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
               <Coffee className="h-4 w-4 text-purple-600 mb-2" />
               <span className="text-[#78847F] block">Unpaid Break</span>
               <span className="font-extrabold text-[#183B36] text-sm mt-1 block">
-                {employee.assignedShift.breakMinutes} Minutes
+                {shiftObj.breakMinutes} Minutes
               </span>
             </div>
 

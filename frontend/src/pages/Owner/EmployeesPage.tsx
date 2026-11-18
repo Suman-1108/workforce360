@@ -56,11 +56,28 @@ export const EmployeesPage: React.FC<EmployeesPageProps> = ({
           avatarUrl:
             it.avatar_url ||
             'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-          assignedShift: 'Standard Day Shift (09:00 - 18:00)',
+          reportingManager: 'Organization Owner',
+          assignedShift: {
+            name: 'Standard Day Shift',
+            timing: '09:00 AM - 06:00 PM',
+            graceMinutes: 15,
+            breakMinutes: 45,
+          },
+          address: {
+            street: it.branch_name || 'Apex HQ Campus',
+            city: 'Headquarters',
+            state: '',
+            postalCode: '',
+          },
           emergencyContact: {
             name: 'Emergency Contact',
-            relationship: 'Family',
-            phone: it.emergency_contact || '+1 (555) 999-0000',
+            relation: 'Family',
+            phone: it.emergency_contact || 'Not provided',
+          },
+          leaveBalance: {
+            annual: { total: 18, used: 4 },
+            medical: { total: 10, used: 1 },
+            casual: { total: 12, used: 2 },
           },
         }))
         setEmployees(mapped)
