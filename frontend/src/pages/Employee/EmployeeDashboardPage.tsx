@@ -18,8 +18,21 @@ import {
 import { Button, Badge, Modal } from '../../components/common'
 import { attendanceApi } from '../../services/api'
 import { EmployeeUniformView } from '../../components/uniforms'
+import {
+  BreaksAndUniformSection,
+  EmployeeLeaveSection,
+  EmployeeWorkUpdatesSection,
+  EmployeeSupportSection,
+  EmployeeFinanceVaultSection,
+} from '../../components/employee/EmployeePortalSections'
 
-export const EmployeeDashboardPage: React.FC = () => {
+export interface EmployeeDashboardPageProps {
+  activeTab?: string
+}
+
+export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
+  activeTab = 'home',
+}) => {
   const [currentUser, setCurrentUser] = useState<{
     first_name?: string
     last_name?: string
@@ -518,8 +531,16 @@ export const EmployeeDashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Primary Punch Card (GPS Geofence + Live Camera Selfie) */}
-      <div className="bg-white rounded-4xl p-6 sm:p-10 border border-[#E5EAE4] card-soft-shadow text-center relative overflow-hidden">
+      {/* Tab-Specific Portal Views */}
+      {activeTab === 'leave' && <EmployeeLeaveSection />}
+      {activeTab === 'work' && <EmployeeWorkUpdatesSection />}
+      {activeTab === 'support' && <EmployeeSupportSection />}
+      {activeTab === 'salary' && <EmployeeFinanceVaultSection />}
+
+      {activeTab === 'home' && (
+        <>
+          {/* Primary Punch Card (GPS Geofence + Live Camera Selfie) */}
+          <div className="bg-white rounded-4xl p-6 sm:p-10 border border-[#E5EAE4] card-soft-shadow text-center relative overflow-hidden">
         {/* Subtle Decorative Background */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-dots opacity-40 pointer-events-none" />
 
@@ -613,6 +634,9 @@ export const EmployeeDashboardPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Tea Break, Lunch Break & Today's Uniform */}
+      <BreaksAndUniformSection />
+
       {/* Quick Summary Cards: Leave Balances & Upcoming Days */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-3xl p-5 border border-[#E5EAE4] card-soft-shadow">
@@ -679,6 +703,8 @@ export const EmployeeDashboardPage: React.FC = () => {
 
       {/* Employee Assigned Uniform & Gear Kits */}
       <EmployeeUniformView />
+        </>
+      )}
 
       {/* GPS & Real Camera Punch Modal */}
       <Modal

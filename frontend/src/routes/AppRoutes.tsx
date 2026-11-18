@@ -16,6 +16,7 @@ import {
   NotificationsPage,
   SubscriptionPage,
   SettingsPage,
+  OwnerDeskPage,
 } from '../pages/Owner'
 import { EmployeeDashboardPage } from '../pages/Employee'
 import {
@@ -208,6 +209,7 @@ export const AppRoutes: React.FC = () => {
                 <Route path="departments" element={<DepartmentsPage />} />
                 <Route path="leave" element={<LeavePage />} />
                 <Route path="uniforms" element={<UniformsPage />} />
+                <Route path="desk" element={<OwnerDeskPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="subscription" element={<SubscriptionPage />} />
@@ -230,7 +232,7 @@ export const AppRoutes: React.FC = () => {
               onLogout={handleLogout}
             >
               <Routes>
-                <Route path="" element={<EmployeeDashboardPage />} />
+                <Route path="" element={<EmployeeDashboardPage activeTab={employeeTab} />} />
                 <Route path="*" element={<Navigate to="/employee" replace />} />
               </Routes>
             </EmployeeLayout>

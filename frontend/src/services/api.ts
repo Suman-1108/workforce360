@@ -371,3 +371,138 @@ export const settingsApi = {
     return res.data;
   },
 };
+
+export const portalApi = {
+  // Tea & Lunch Breaks
+  getTodayBreaks: async (scope?: 'all') => {
+    const res = await api.get('/portal/breaks/today', { params: scope ? { scope } : undefined });
+    return res.data?.data || res.data;
+  },
+  startBreak: async (data: { break_type: 'Tea Break' | 'Lunch Break'; notes?: string }) => {
+    const res = await api.post('/portal/breaks/start', data);
+    return res.data?.data || res.data;
+  },
+  endBreak: async (notes?: string) => {
+    const res = await api.post('/portal/breaks/end', notes ? { notes } : {});
+    return res.data?.data || res.data;
+  },
+
+  // Today's Uniform Schedule
+  getUniformToday: async () => {
+    const res = await api.get('/portal/uniform-today');
+    return res.data?.data || res.data;
+  },
+  setUniformToday: async (data: {
+    date?: string;
+    uniform_title: string;
+    dress_code: string;
+    color_theme: string;
+    items_required: string;
+    notes?: string;
+    uniform_item_id?: number;
+  }) => {
+    const res = await api.post('/portal/uniform-today', data);
+    return res.data?.data || res.data;
+  },
+
+  // Daily Work Updates
+  listWorkUpdates: async (scope?: 'all') => {
+    const res = await api.get('/portal/work-updates', { params: scope ? { scope } : undefined });
+    return res.data?.data || res.data;
+  },
+  createWorkUpdate: async (data: {
+    task_title: string;
+    summary: string;
+    hours_spent: number;
+    progress_status: 'In Progress' | 'Completed' | 'Blocked';
+  }) => {
+    const res = await api.post('/portal/work-updates', data);
+    return res.data?.data || res.data;
+  },
+  addWorkUpdateFeedback: async (updateId: number, owner_feedback: string) => {
+    const res = await api.put(`/portal/work-updates/${updateId}/feedback`, { owner_feedback });
+    return res.data?.data || res.data;
+  },
+
+  // Complaints & Support Tickets
+  listTickets: async (scope?: 'all', status?: string) => {
+    const res = await api.get('/portal/tickets', {
+      params: { ...(scope ? { scope } : {}), ...(status ? { status } : {}) },
+    });
+    return res.data?.data || res.data;
+  },
+  createTicket: async (data: {
+    category: 'Workplace' | 'Payroll' | 'HR' | 'Uniform & Gear' | 'IT & Equipment' | 'Safety' | 'Other';
+    priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+    subject: string;
+    description: string;
+  }) => {
+    const res = await api.post('/portal/tickets', data);
+    return res.data?.data || res.data;
+  },
+  updateTicket: async (
+    ticketId: number,
+    data: { status?: 'Open' | 'In Review' | 'Resolved' | 'Closed'; owner_response?: string }
+  ) => {
+    const res = await api.put(`/portal/tickets/${ticketId}`, data);
+    return res.data?.data || res.data;
+  },
+
+  // Salary Details & PIN-Protected Company Bank Account Vault
+  getFinanceStatus: async () => {
+    const res = await api.get('/portal/finance/status');
+    return res.data?.data || res.data;
+  },
+  setFinancePin: async (pin: string, current_pin?: string) => {
+    const res = await api.post('/portal/finance/set-pin', {
+      pin,
+      ...(current_pin ? { current_pin } : {}),
+    });
+    return res.data?.data || res.data;
+  },
+  unlockFinanceVault: async (pin: string) => {
+    const res = await api.post('/portal/finance/unlock', { pin });
+    return res.data?.data || res.data;
+  },
+  ownerGetFinanceConfig: async () => {
+    const res = await api.get('/portal/owner/finance/config');
+    return res.data?.data || res.data;
+  },
+  ownerUpdateCompanyBank: async (data: {
+    bank_name: string;
+    account_holder_name: string;
+    account_number: string;
+    ifsc_or_routing: string;
+    branch_name: string;
+    account_type: string;
+    upi_or_payment_ref?: string;
+    payroll_cycle: string;
+    security_pin?: string;
+    pin_enabled: boolean;
+  }) => {
+    const res = await api.put('/portal/owner/company-bank', data);
+    return res.data?.data || res.data;
+  },
+  ownerUpdateEmployeeSalary: async (
+    employeeId: number,
+    data: {
+      basic_salary: number;
+      hra_allowance: number;
+      transport_allowance: number;
+      other_allowances: number;
+      tax_deduction: number;
+      pf_deduction: number;
+      other_deductions: number;
+      currency: string;
+      pay_frequency: string;
+      last_paid_date?: string;
+      payment_status: string;
+      employee_bank_name?: string;
+      employee_account_number?: string;
+      employee_ifsc?: string;
+    }
+  ) => {
+    const res = await api.put(`/portal/owner/salary/${employeeId}`, data);
+    return res.data?.data || res.data;
+  },
+};

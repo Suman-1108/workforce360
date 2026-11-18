@@ -11,6 +11,7 @@ from app.routes.payment_routes import router as payment_router
 from app.routes.report_routes import router as report_router
 from app.routes.notification_routes import router as notification_router
 from app.routes.super_admin_routes import router as super_admin_router
+from app.routes.employee_portal_routes import router as employee_portal_router
 
 __all__ = [
     "auth_router",
@@ -26,4 +27,5 @@ __all__ = [
     "report_router",
     "notification_router",
     "super_admin_router",
+    "employee_portal_router",
 ]

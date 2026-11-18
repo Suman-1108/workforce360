@@ -14,6 +14,7 @@ from app.routes import (
     report_router,
     notification_router,
     super_admin_router,
+    employee_portal_router,
 )
 
 api_router = APIRouter()
@@ -36,3 +37,4 @@ api_router.include_router(report_router, prefix="/reports", tags=["Reports & Ana
 api_router.include_router(notification_router, prefix="/notifications", tags=["Notifications"])
 api_router.include_router(super_admin_router, prefix="/super-admin", tags=["Super Admin"])
 api_router.include_router(super_admin_router, prefix="/superadmin", tags=["Super Admin"])
+api_router.include_router(employee_portal_router, prefix="/portal", tags=["Employee Portal & Owner Desk"])

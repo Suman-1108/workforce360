@@ -17,6 +17,7 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  Landmark,
 } from 'lucide-react'
 
 export interface SidebarProps {
@@ -61,6 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'departments', label: 'Departments', icon: <Building className="h-4.5 w-4.5 shrink-0" /> },
     { id: 'leave', label: 'Leave Management', icon: <Coffee className="h-4.5 w-4.5 shrink-0" />, badge: '3' },
     { id: 'uniforms', label: 'Uniform Management', icon: <Shirt className="h-4.5 w-4.5 shrink-0" /> },
+    { id: 'desk', label: 'Employee Desk & Payroll', icon: <Landmark className="h-4.5 w-4.5 shrink-0" />, badge: 'New' },
     { id: 'reports', label: 'Reports & Analytics', icon: <BarChart3 className="h-4.5 w-4.5 shrink-0" /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="h-4.5 w-4.5 shrink-0" /> },
     { id: 'subscription', label: 'Subscription', icon: <CreditCard className="h-4.5 w-4.5 shrink-0" /> },

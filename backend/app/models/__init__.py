@@ -12,6 +12,14 @@ from app.models.leave import LeaveType, LeaveRequest
 from app.models.uniform import UniformItem, UniformDistribution
 from app.models.notification import Notification
 from app.models.audit import AuditLog
+from app.models.employee_portal import (
+    WorkBreak,
+    WorkUpdate,
+    SupportTicket,
+    DailyUniformSchedule,
+    CompanyBankAccount,
+    EmployeeSalaryProfile,
+)
 
 __all__ = [
     "Base",
@@ -33,4 +41,10 @@ __all__ = [
     "UniformDistribution",
     "Notification",
     "AuditLog",
+    "WorkBreak",
+    "WorkUpdate",
+    "SupportTicket",
+    "DailyUniformSchedule",
+    "CompanyBankAccount",
+    "EmployeeSalaryProfile",
 ]

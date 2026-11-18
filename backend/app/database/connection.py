@@ -56,6 +56,12 @@ def ensure_mongo_indexes(db: Optional[Database] = None) -> None:
         "uniform_distributions",
         "notifications",
         "audit_logs",
+        "work_breaks",
+        "work_updates",
+        "support_tickets",
+        "daily_uniforms",
+        "company_bank_accounts",
+        "employee_salary_profiles",
     ]
 
     for col in collections:
@@ -82,6 +88,12 @@ def ensure_mongo_indexes(db: Optional[Database] = None) -> None:
     database["uniform_distributions"].create_index([("tenant_id", ASCENDING), ("employee_id", ASCENDING)])
     database["notifications"].create_index([("tenant_id", ASCENDING), ("is_read", ASCENDING)])
     database["audit_logs"].create_index([("tenant_id", ASCENDING), ("created_at", ASCENDING)])
+    database["work_breaks"].create_index([("tenant_id", ASCENDING), ("employee_id", ASCENDING), ("date", ASCENDING)])
+    database["work_updates"].create_index([("tenant_id", ASCENDING), ("employee_id", ASCENDING), ("date", ASCENDING)])
+    database["support_tickets"].create_index([("tenant_id", ASCENDING), ("employee_id", ASCENDING), ("status", ASCENDING)])
+    database["daily_uniforms"].create_index([("tenant_id", ASCENDING), ("date", ASCENDING)])
+    database["company_bank_accounts"].create_index([("tenant_id", ASCENDING)], unique=True)
+    database["employee_salary_profiles"].create_index([("tenant_id", ASCENDING), ("employee_id", ASCENDING)], unique=True)
 
 
 def check_db_connection() -> Dict[str, Any]:
