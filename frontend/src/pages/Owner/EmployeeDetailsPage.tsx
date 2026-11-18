@@ -34,9 +34,10 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
   const [liveAttendance, setLiveAttendance] = useState<any[]>([])
 
   useEffect(() => {
-    if (employee?.id) {
+    const numericId = Number(employee?.id)
+    if (Number.isFinite(numericId) && numericId > 0) {
       attendanceApi
-        .list({ employee_id: Number(employee.id) })
+        .list({ employee_id: numericId })
         .then((res) => {
           const items = res?.items || (Array.isArray(res) ? res : [])
           if (items.length > 0) {
@@ -57,9 +58,13 @@ export const EmployeeDetailsPage: React.FC<EmployeeDetailsPageProps> = ({
                 status: r.status || 'Present',
               }))
             )
+          } else {
+            setLiveAttendance([])
           }
         })
         .catch(() => {})
+    } else {
+      setLiveAttendance([])
     }
   }, [employee?.id])
 

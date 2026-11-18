@@ -135,7 +135,11 @@ export const employeesApi = {
 
 export const attendanceApi = {
   list: async (params?: { date?: string; employee_id?: number; status?: string }) => {
-    const res = await api.get('/attendance', { params });
+    const cleanParams = params ? { ...params } : undefined;
+    if (cleanParams && cleanParams.employee_id !== undefined && !Number.isFinite(cleanParams.employee_id)) {
+      delete cleanParams.employee_id;
+    }
+    const res = await api.get('/attendance', { params: cleanParams });
     return unwrap(res);
   },
   getTodayPunchStatus: async () => {

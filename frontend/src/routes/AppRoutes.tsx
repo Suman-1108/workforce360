@@ -27,7 +27,6 @@ import {
 import { DashboardLayout } from '../layouts/DashboardLayout'
 import { EmployeeLayout } from '../layouts/EmployeeLayout'
 import { SuperAdminLayout } from '../layouts/SuperAdminLayout'
-import { INITIAL_EMPLOYEES } from '../services/mockEmployees'
 import type { Employee } from '../types/employee'
 
 /**
@@ -65,7 +64,15 @@ const ProtectedRoute: React.FC<{
 export const AppRoutes: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee>(INITIAL_EMPLOYEES[0])
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(() => {
+    try {
+      const saved = sessionStorage.getItem('wf360_selected_employee')
+      if (saved) return JSON.parse(saved)
+    } catch {
+      // ignore storage errors
+    }
+    return null
+  })
   const [employeeTab, setEmployeeTab] = useState('home')
 
   // Synchronize active sidebar route dynamically from current location pathname
@@ -181,6 +188,11 @@ export const AppRoutes: React.FC = () => {
                       onAddEmployeeClick={() => navigate('/owner/employees/add')}
                       onViewEmployee={(emp) => {
                         setSelectedEmployee(emp)
+                        try {
+                          sessionStorage.setItem('wf360_selected_employee', JSON.stringify(emp))
+                        } catch {
+                          // ignore storage errors
+                        }
                         navigate('/owner/employees/details')
                       }}
                     />
@@ -198,10 +210,14 @@ export const AppRoutes: React.FC = () => {
                 <Route
                   path="employees/details"
                   element={
-                    <EmployeeDetailsPage
-                      employee={selectedEmployee}
-                      onBack={() => navigate('/owner/employees')}
-                    />
+                    selectedEmployee ? (
+                      <EmployeeDetailsPage
+                        employee={selectedEmployee}
+                        onBack={() => navigate('/owner/employees')}
+                      />
+                    ) : (
+                      <Navigate to="/owner/employees" replace />
+                    )
                   }
                 />
                 <Route path="attendance" element={<AttendancePage />} />
