@@ -13,9 +13,10 @@ import {
   RefreshCw,
   ShieldCheck,
   SwitchCamera,
+  Utensils,
 } from 'lucide-react'
 import { Button, Badge, Modal } from '../../components/common'
-import { attendanceApi } from '../../services/api'
+import { attendanceApi, portalApi } from '../../services/api'
 import { EmployeeUniformView } from '../../components/uniforms'
 import {
   BreaksAndUniformSection,
@@ -53,7 +54,9 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
 
   // Punch modal & camera states
   const [punchModalOpen, setPunchModalOpen] = useState(false)
-  const [punchType, setPunchType] = useState<'checkIn' | 'checkOut'>('checkIn')
+  const [punchType, setPunchType] = useState<'checkIn' | 'checkOut' | 'teaBreak' | 'lunchBreak' | 'endBreak'>('checkIn')
+  const [activeBreak, setActiveBreak] = useState<{ break_type: 'Tea Break' | 'Lunch Break'; start_time?: string } | null>(null)
+  const [breaksRefreshKey, setBreaksRefreshKey] = useState(0)
   const [isProcessingPunch, setIsProcessingPunch] = useState(false)
   const [punchSuccess, setPunchSuccess] = useState(false)
   const [punchError, setPunchError] = useState<string | null>(null)
@@ -282,6 +285,13 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
     } catch (err) {
       console.warn('Could not fetch today punch status:', err)
     }
+
+    try {
+      const brk = await portalApi.getTodayBreaks()
+      setActiveBreak(brk?.active_break || null)
+    } catch {
+      // ignore
+    }
   }
 
   useEffect(() => {
@@ -322,7 +332,9 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
       .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
   }
 
-  const handleOpenPunchModal = (type: 'checkIn' | 'checkOut') => {
+  const handleOpenPunchModal = (
+    type: 'checkIn' | 'checkOut' | 'teaBreak' | 'lunchBreak' | 'endBreak'
+  ) => {
     setPunchType(type)
     setPunchSuccess(false)
     setPunchError(null)
@@ -342,11 +354,46 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
     setCameraStatus('idle')
   }
 
+  const getPunchModalMeta = () => {
+    switch (punchType) {
+      case 'checkIn':
+        return {
+          title: 'Live Camera & GPS Punch In',
+          buttonLabel: 'Punch In',
+          successTitle: 'Punch In Confirmed!',
+        }
+      case 'checkOut':
+        return {
+          title: 'Live Camera & GPS Punch Out',
+          buttonLabel: 'Punch Out',
+          successTitle: 'Punch Out Confirmed!',
+        }
+      case 'teaBreak':
+        return {
+          title: 'Live Camera & GPS Tea Break',
+          buttonLabel: 'Start Tea Break',
+          successTitle: 'Tea Break Started!',
+        }
+      case 'lunchBreak':
+        return {
+          title: 'Live Camera & GPS Lunch Break',
+          buttonLabel: 'Start Lunch Break',
+          successTitle: 'Lunch Break Started!',
+        }
+      case 'endBreak':
+        return {
+          title: `End ${activeBreak?.break_type || 'Break'} & Resume Shift`,
+          buttonLabel: `End ${activeBreak?.break_type || 'Break'}`,
+          successTitle: `${activeBreak?.break_type || 'Break'} Completed!`,
+        }
+    }
+  }
+
   const handleConfirmPunch = async () => {
     setIsProcessingPunch(true)
     setPunchError(null)
 
-    // Capture photo from video feed if not already manually captured
+    // Automatically capture proof frame from live camera feed
     let selfiePayload = capturedPhoto
     if (!selfiePayload && videoRef.current && cameraStatus === 'active') {
       selfiePayload = takeSnapshot()
@@ -394,7 +441,7 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
           setCheckInTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
         }
         setElapsedSeconds(0)
-      } else {
+      } else if (punchType === 'checkOut') {
         const res = await attendanceApi.punchOut({
           latitude: lat,
           longitude: lng,
@@ -412,19 +459,35 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
         } else {
           setCheckOutTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
         }
+      } else if (punchType === 'teaBreak') {
+        await portalApi.startBreak({ break_type: 'Tea Break' })
+        setIsProcessingPunch(false)
+        setPunchSuccess(true)
+        setBreaksRefreshKey((k) => k + 1)
+      } else if (punchType === 'lunchBreak') {
+        await portalApi.startBreak({ break_type: 'Lunch Break' })
+        setIsProcessingPunch(false)
+        setPunchSuccess(true)
+        setBreaksRefreshKey((k) => k + 1)
+      } else if (punchType === 'endBreak') {
+        await portalApi.endBreak()
+        setIsProcessingPunch(false)
+        setPunchSuccess(true)
+        setActiveBreak(null)
+        setBreaksRefreshKey((k) => k + 1)
       }
 
       setTimeout(() => {
         handleClosePunchModal()
         fetchTodayStatus()
-      }, 1600)
+      }, 1400)
     } catch (err: any) {
       setIsProcessingPunch(false)
       const detail =
         err.response?.data?.message ||
         err.response?.data?.detail ||
         err.message ||
-        'Punch failed. Please check geofence or camera permissions.'
+        'Action failed. Please check geofence or camera permissions.'
       setPunchError(detail)
     }
   }
@@ -543,8 +606,8 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
             </div>
           </div>
 
-          {/* Action Punch Buttons */}
-          <div className="flex flex-col items-center justify-center gap-3 pt-2">
+          {/* Action Punch & Break Buttons (Punch In, Punch Out, Tea Break, Lunch Break) */}
+          <div className="space-y-3 pt-2">
             {!hasPunchedIn ? (
               <Button
                 variant="primary"
@@ -554,7 +617,7 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
                 leftIcon={<Camera className="h-5 w-5" />}
                 className="py-4 text-base shadow-md hover:shadow-lg"
               >
-                GPS & Live Camera Check-In
+                Punch In
               </Button>
             ) : !hasPunchedOut ? (
               <Button
@@ -565,13 +628,13 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
                 leftIcon={<Clock className="h-5 w-5" />}
                 className="py-4 text-base shadow-md hover:shadow-lg"
               >
-                Confirm Shift Check-Out
+                Punch Out
               </Button>
             ) : (
               <div className="w-full space-y-3">
                 <div className="p-4 rounded-2xl bg-[#E6F3F1] border border-[#BDE0D9] text-[#075E54] flex items-center justify-center gap-2 font-bold text-sm">
                   <CheckCircle2 className="h-5 w-5" />
-                  <span>Today's Shift Completed</span>
+                  <span>Today&apos;s Shift Completed</span>
                 </div>
                 <Button
                   variant="outline"
@@ -586,6 +649,57 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
                 </Button>
               </div>
             )}
+
+            {/* Quick Tea Break & Lunch Break Controls */}
+            {!hasPunchedOut && (
+              <div className="grid grid-cols-2 gap-3">
+                {activeBreak?.break_type === 'Tea Break' ? (
+                  <Button
+                    variant="accent"
+                    size="md"
+                    fullWidth
+                    onClick={() => handleOpenPunchModal('endBreak')}
+                    leftIcon={<Coffee className="h-4 w-4" />}
+                  >
+                    End Tea Break
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="md"
+                    fullWidth
+                    disabled={Boolean(activeBreak)}
+                    onClick={() => handleOpenPunchModal('teaBreak')}
+                    leftIcon={<Coffee className="h-4 w-4 text-[#EA580C]" />}
+                  >
+                    Tea Break
+                  </Button>
+                )}
+
+                {activeBreak?.break_type === 'Lunch Break' ? (
+                  <Button
+                    variant="accent"
+                    size="md"
+                    fullWidth
+                    onClick={() => handleOpenPunchModal('endBreak')}
+                    leftIcon={<Utensils className="h-4 w-4" />}
+                  >
+                    End Lunch Break
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="md"
+                    fullWidth
+                    disabled={Boolean(activeBreak)}
+                    onClick={() => handleOpenPunchModal('lunchBreak')}
+                    leftIcon={<Utensils className="h-4 w-4 text-[#075E54]" />}
+                  >
+                    Lunch Break
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs text-[#78847F]">
@@ -596,7 +710,7 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
       </div>
 
       {/* Tea Break, Lunch Break & Today's Uniform */}
-      <BreaksAndUniformSection />
+      <BreaksAndUniformSection key={breaksRefreshKey} />
 
       {/* Quick Summary Cards: Leave Balances & Upcoming Days */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -667,12 +781,12 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
         </>
       )}
 
-      {/* GPS & Real Camera Punch Modal */}
+      {/* GPS & Real Camera Punch / Break Modal */}
       <Modal
         isOpen={punchModalOpen}
         onClose={handleClosePunchModal}
-        title={punchType === 'checkIn' ? 'Live Camera & GPS Check-In' : 'Shift Departure Check-Out'}
-        description="Verify device location within branch perimeter and capture webcam selfie proof."
+        title={getPunchModalMeta().title}
+        description="Verify device location within branch perimeter and live camera proof."
         size="sm"
       >
         {punchSuccess ? (
@@ -681,10 +795,10 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
               <CheckCircle2 className="h-8 w-8" />
             </div>
             <h4 className="text-lg font-bold text-[#183B36]">
-              {punchType === 'checkIn' ? 'Check-In Confirmed!' : 'Check-Out Confirmed!'}
+              {getPunchModalMeta().successTitle}
             </h4>
             <p className="text-xs text-[#78847F] mt-1">
-              GPS Geofence: Inside 500m &bull; Live Selfie Authenticated
+              GPS Geofence: Inside 500m &bull; Live Camera Verified
             </p>
           </div>
         ) : (
@@ -823,35 +937,17 @@ export const EmployeeDashboardPage: React.FC<EmployeeDashboardPageProps> = ({
               </div>
             )}
 
-            {/* Submit & Snapshot Controls */}
-            <div className="flex items-center gap-2">
-              {cameraStatus === 'active' && !capturedPhoto && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="lg"
-                  onClick={() => takeSnapshot()}
-                  leftIcon={<Camera className="h-4 w-4" />}
-                  className="shrink-0"
-                >
-                  Snap
-                </Button>
-              )}
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                isLoading={isProcessingPunch}
-                onClick={handleConfirmPunch}
-                leftIcon={<CheckCircle2 className="h-4 w-4" />}
-              >
-                {isProcessingPunch
-                  ? 'Verifying & Submitting...'
-                  : punchType === 'checkIn'
-                  ? 'Capture Proof & Punch In'
-                  : 'Capture Proof & Punch Out'}
-              </Button>
-            </div>
+            {/* Single Direct Action Button (no Snap button) */}
+            <Button
+              variant={punchType === 'checkOut' || punchType === 'endBreak' ? 'accent' : 'primary'}
+              size="lg"
+              fullWidth
+              isLoading={isProcessingPunch}
+              onClick={handleConfirmPunch}
+              leftIcon={<CheckCircle2 className="h-4 w-4" />}
+            >
+              {isProcessingPunch ? 'Verifying & Submitting...' : getPunchModalMeta().buttonLabel}
+            </Button>
           </div>
         )}
       </Modal>
