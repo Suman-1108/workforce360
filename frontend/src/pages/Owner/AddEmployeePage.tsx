@@ -10,7 +10,6 @@ import {
   Building,
   Save,
   Shirt,
-  ShieldCheck,
   FileCheck,
 } from 'lucide-react'
 import { Button, Input, Select, PhoneInput } from '../../components/common'
@@ -244,16 +243,6 @@ export const AddEmployeePage: React.FC<AddEmployeePageProps> = ({
             Save Employee
           </Button>
         </div>
-      </div>
-
-      {/* Manual Save Information Pill */}
-      <div className="p-3.5 rounded-2xl bg-[#E6F3F1] border border-[#BDE0D9] text-xs text-[#075E54] flex items-center justify-between">
-        <span className="flex items-center gap-2 font-medium">
-          <ShieldCheck className="h-4 w-4 text-[#075E54] shrink-0" />
-          <span>
-            <strong>Manual Save Mode:</strong> Form does not save automatically on Enter. You can navigate between tabs freely and click <strong>Save Employee</strong> when finished.
-          </span>
-        </span>
       </div>
 
       {/* Notification Banners */}
